@@ -1,0 +1,21 @@
+package com.nrt.render;
+
+import android.opengl.GLES20;
+
+public enum EClearBuffer
+{
+	Color(GLES20.GL_COLOR_BUFFER_BIT),
+	Depth(GLES20.GL_DEPTH_BUFFER_BIT),
+	Stencil(GLES20.GL_STENCIL_BUFFER_BIT),
+	ColorDepth(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT),
+	ColorStencil(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_STENCIL_BUFFER_BIT),
+	ColorDepthStencil(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT|GLES20.GL_STENCIL_BUFFER_BIT),
+	DepthStencil(GLES20.GL_DEPTH_BUFFER_BIT|GLES20.GL_STENCIL_BUFFER_BIT);
+	
+	public int Value = 0;
+	
+	EClearBuffer(int value)
+	{
+		Value = value;
+	}
+}
