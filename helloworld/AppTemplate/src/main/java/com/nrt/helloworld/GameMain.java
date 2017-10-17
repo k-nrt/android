@@ -15,8 +15,9 @@ import com.nrt.framework.*;
 import com.nrt.clipper.*;
 import com.nrt.font.*;
 
+import com.nrt.framework.AppFrame;
 
-public class GameMain
+public class GameMain implements AppFrame
 {
 	public GamePlayer m_player = null;
 	public GameStarShip[] m_starShips = null;

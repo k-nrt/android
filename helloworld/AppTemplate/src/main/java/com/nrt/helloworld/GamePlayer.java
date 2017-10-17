@@ -1027,7 +1027,7 @@ public final class GamePlayer
 				//float l = Float3.Length( f3IntersectionLocal );
 				float l = Float3.Distance( f3Intersection, f3Center);
 				
-				SubSystem.Log.WriteLine( String.format("distance %f",l));
+				//SubSystem.Log.WriteLine( String.format("distance %f",l));
 
 				//Shield -= 50.0f;
 

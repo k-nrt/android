@@ -199,7 +199,7 @@ public class FontRender
 			vb.Add( rgba );
 			vb.Add( info.U + uvsize, info.V + uvsize, info.Texture + tex, info.Channel  );
 
-			x += info.Width;
+			x += m_fSize*info.Width/((float)m_font.m_nFontSize);
 
 			ib.Add( (short) (0 + m_nIndexOffset) );
 			ib.Add( (short) (1 + m_nIndexOffset) );

@@ -5,6 +5,7 @@ import com.nrt.font.FontRender;
 import com.nrt.font.Font;
 import com.nrt.render.BasicRender;
 import com.nrt.render.DelayResourceQueue;
+import com.nrt.render.DelayResourceQueueMarker;
 import com.nrt.render.FrameLinearIndexBuffer;
 import com.nrt.render.FrameLinearVertexBuffer;
 import com.nrt.render.GfxCommandBuffer;
@@ -24,6 +25,8 @@ public class RenderSystem
 	FrameLinearVertexBuffer[] m_vertexBuffers = null;
 	FrameLinearIndexBuffer[] m_indexBuffers = null;
 	GfxCommandBuffer[] m_gfxCommandBuffers = null;
+	
+	DelayResourceQueueMarker m_marker = new DelayResourceQueueMarker("RenderSystem");
 
 	//. Per Jobs.
 	GfxCommandContext[] m_gfxCommandContexts = null;
@@ -102,6 +105,8 @@ public class RenderSystem
 
 		m_nbPresentationBuffers = configuation.PresentationBufferCount;
 		m_nbCommandBuilderJobs = configuation.GfxCommandBuilderJobCount;
+		
+		drq.Add(m_marker);
 	}
 
 	public void SetFont(final Font font)
@@ -127,8 +132,13 @@ public class RenderSystem
 		return index * m_nbCommandBuilderJobs;
 	}
 
-	public boolean BeginBuilerFrame()
+	public boolean BeginBuilderFrame()
 	{
+		if(m_marker.Done==false)
+		{
+			return false;
+		}
+		
 		long builder = 0;
 		long render = 0;
 
@@ -138,7 +148,7 @@ public class RenderSystem
 			render = RenderFrame;
 		}
 
-		if(m_nbPresentationBuffers <= (builder - render))
+		if((m_nbPresentationBuffers - 1) <= (builder - render))
 		{
 			return false;
 		}
@@ -167,7 +177,7 @@ public class RenderSystem
 					);
 
 		}
-
+		
 		return true;
 	}
 
@@ -186,6 +196,11 @@ public class RenderSystem
 
 	public boolean UpdateResources()
 	{
+		if(m_marker.Done == false)
+		{
+			return false;
+		}
+		
 		long builder = 0;
 		long render = 0;
 		synchronized (m_locker)
@@ -199,18 +214,26 @@ public class RenderSystem
 			return false;
 		}
 
+		
 		int buffer = GetBuilderBufferStartIndex(render);
-
+		
 		for (int i = 0; i < m_nbCommandBuilderJobs; i++)
 		{
 			m_vertexBuffers[buffer + i].UpdateResource();
 			m_indexBuffers[buffer + i].UpdateResource();
 		}
+		
 		return true;
 	}
 
 	public boolean ProcessCommands(final Render r)
 	{
+		
+		if( m_marker.Done == false )
+		{
+			return false;
+		}
+		
 		long builder = 0;
 		long render = 0;
 		synchronized (m_locker)
@@ -229,12 +252,12 @@ public class RenderSystem
 		{
 			m_gfxCommandBuffers[buffer + i].ProcessCommands(r, 0, -1);
 		}
-
+		
 		synchronized (m_locker)
 		{
 			RenderFrame++;
 		}
-
+		
 		return true;
 	}
 }

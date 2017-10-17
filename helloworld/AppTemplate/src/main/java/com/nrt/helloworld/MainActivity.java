@@ -27,7 +27,9 @@ import com.nrt.framework.*;
 
 import com.nrt.math.Float3;
 import com.nrt.math.Float4x4;
-
+import java.util.logging.*;
+import java.util.concurrent.atomic.*;
+import org.apache.commons.codec.language.bm.*;
 
 public class MainActivity extends Activity
 {
@@ -37,132 +39,36 @@ public class MainActivity extends Activity
 
 	private static GameMain m_gameMain = new GameMain();
 	
-	static class LoadingThread extends Thread
-	{
-		public DelayResourceQueue m_delayResourceQueue = null;
-		public GameMain m_gameMain = null;
-		public int m_iJob=0;
-		public LoadingThread(DelayResourceQueue drq, ThreadGroup threadGroup, GameMain gameMain, int iJobIndex)
-		{
-			super(threadGroup, String.format("thread%d", iJobIndex));
-			m_delayResourceQueue = drq;
-			m_gameMain = gameMain;
-			m_iJob = iJobIndex;
-		}
-
-		@Override
-		public void run()
-		{
-			String strThreadName = Thread.currentThread().getName();
-			SubSystem.Log.WriteLine( String.format("start thread %s", strThreadName));
-
-			int nbThreads = Thread.activeCount();
-			SubSystem.Log.WriteLine( String.format("thread count %d", nbThreads));
-			if( 0 < nbThreads )
-			{
-
-				Thread[] threads = new Thread[nbThreads];
-				//Thread.enumerate( threads );
-				for( Thread thread : threads )
-				{
-					if( thread == null )
-					{
-						continue;
-					}
-					if( strThreadName.equals( thread.getName() ) )
-					{
-						SubSystem.Log.WriteLine
-						( 
-							String.format("Detect thread duplicate %s",
-										  strThreadName)
-						);
-						return;
-					}
-				}
-			}
-
-			/*
-			if (m_iJob == 0)
-			{
-				//SubSystem.OnLoadContent(m_delayResourceQueue,0);
-				//m_gameMain.OnLoadContent(m_delayResourceQueue, 0);
-				//m_gameMain.OnLoadContent(m_delayResourceQueue, 1);
-			}
-			else
-			{
-				//SubSystem.OnLoadContent(m_delayResourceQueue,1);
-			}
-			*/
-
-			SubSystem.Log.WriteLine(this.getName() + " thread end.");
-		}
-	}
-	
-
-	
-	static ThreadGroup m_threadGroup0 = new ThreadGroup( "loading0" );
-	static ThreadGroup m_threadGroup1 = new ThreadGroup( "loading1" );
-	static LoadingThread m_loadingThread1 = null;
-	static LoadingThread m_loadingThread2 = null;
 	static int m_nbOnCreated = 0;
-	/*
-	static class Loader implements Runnable
-	{
-		public GameMain m_gameMain = null;
-		public int m_iJobIndex = 0;
-		
-		public Loader( GameMain gameMain, int iJobIndex )
-		{
-			m_gameMain = gameMain;
-			m_iJobIndex = iJobIndex;			
-		}
-
-		@Override
-		public void run()
-		{
-			m_gameMain.OnLoadContent( SubSystem.DelayResourceQueue, m_iJobIndex );
-		}		
-	}
-	*/
+	
 	// Called when the activity is first created.
 	@Override public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
+		android.util.Log.d("create","create");
+		
 		//. Initialize minimum subsystem instances.		
 		SubSystem.Initialize
 		(
 			getResources().getAssets(), 
 			(TextView) findViewById(R.id.logview),
-			m_handler
+			m_handler,
+			m_gameMain			
 		);
 
 		//. Initialize render surface view.
 		m_renderView = (RenderSurfaceView)this.findViewById(R.id.glview);
-		m_renderView.Initialize(m_gameMain);
+		m_renderView.Initialize();
 		
 		if( m_nbOnCreated <= 0 )
 		{
 			//. Initialize minimum rendering resources.
-			SubSystem.OnCreate(m_renderView.m_surfaceRenderer);
+			SubSystem.OnCreate();
 			DelayResourceQueue drq = SubSystem.DelayResourceQueue;
 	
 			m_gameMain.OnCreate(drq);
-			
-			//SubSystem.DelayResourceLoaderThreads[0].RegisterRunnable( new Loader(m_gameMain,0));
-			//SubSystem.DelayResourceLoaderThreads[1].RegisterRunnable( new Loader(m_gameMain,1));
-
-			//m_loadingThread1 = new LoadingThread(drq,m_threadGroup0, m_gameMain, 0);
-			//m_loadingThread2 = new LoadingThread(drq,m_threadGroup1, m_gameMain, 1);
-
-			//SubSystem.DelayResourceQueue.RegisterThread(m_loadingThread1);
-			//SubSystem.DelayResourceQueue.RegisterThread(m_loadingThread2);
-
-			//m_loadingThread1.start();
-			//m_loadingThread2.start();
-			
-			//SubSystem.DelayResourceQueue.RegisterThread( SubSystem.DelayResourceLoader.
 		}
 		else
 		{
@@ -222,24 +128,22 @@ public class MainActivity extends Activity
 
 class RenderSurfaceView extends GLSurfaceView
 {
-	public SurfaceRenderer m_surfaceRenderer = null;
+	public MainSurfaceRenderer m_surfaceRenderer = null;
 
 	public RenderSurfaceView(Context context, AttributeSet attrs)
 	{
 		super(context, attrs);
-		//Initialize();
 	}
 
 	public RenderSurfaceView(Context context) 
 	{ 
 		super(context);
-		//Initialize();
 	}
 
-	public void Initialize(GameMain gameMain )
+	public void Initialize()
 	{
 		this.setEGLContextClientVersion(2);
-		m_surfaceRenderer = new SurfaceRenderer( gameMain );
+		m_surfaceRenderer = new MainSurfaceRenderer(SubSystem.m_threadAppFrame);
 		this.setRenderer(m_surfaceRenderer);
 	}
 
@@ -282,6 +186,7 @@ class RenderSurfaceView extends GLSurfaceView
 	
 	public void onDestroy()
 	{
+		m_surfaceRenderer.OnDestroy();
 		//super.onDestroy();
 	}
 }
@@ -289,7 +194,7 @@ class RenderSurfaceView extends GLSurfaceView
 
 //////////////////////////////////////////////////////////////////////////
 ///ビュー用のレンダラ―
-class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
+class SurfaceRenderer implements GLSurfaceView.Renderer
 {
 	private int SurfaceWidth = 0;
 	private int SurfaceHeight = 0;
@@ -299,74 +204,10 @@ class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
 	public UiRectButton m_buttonDebug = null;
 	public boolean m_isDispError = true;
 
-	public GameMain m_gameMain = null;//new GameMain();
+	public GameMain m_gameMain = null;
 
-	/*
-	class LoadingThread extends Thread
-	{
-		public DelayResourceQueue m_delayResourceQueue = null;
-		public GameMain m_gameMain = null;
-		public int m_iJob=0;
-		public LoadingThread(DelayResourceQueue drq, ThreadGroup threadGroup, GameMain gameMain, int iJobIndex)
-		{
-			super(threadGroup, String.format("thread%d", iJobIndex));
-			m_delayResourceQueue = drq;
-			m_gameMain = gameMain;
-			m_iJob = iJobIndex;
-		}
-
-		@Override
-		public void run()
-		{
-			String strThreadName = Thread.currentThread().getName();
-			SubSystem.Log.WriteLine( String.format("start thread %s", strThreadName));
-			
-			int nbThreads = Thread.activeCount();
-			SubSystem.Log.WriteLine( String.format("thread count %d", nbThreads));
-			if( 0 < nbThreads )
-			{
-				
-				Thread[] threads = new Thread[nbThreads];
-				//Thread.enumerate( threads );
-				for( Thread thread : threads )
-				{
-					if( thread == null )
-					{
-						continue;
-					}
-					if( strThreadName.equals( thread.getName() ) )
-					{
-						SubSystem.Log.WriteLine
-						( 
-						String.format("Detect thread duplicate %s",
-							strThreadName)
-						);
-						return;
-					}
-				}
-			}
-			
-			if (m_iJob == 0)
-			{
-				SubSystem.OnLoadContent(m_delayResourceQueue,0);
-				m_gameMain.OnLoadContent(m_delayResourceQueue, 0);
-				m_gameMain.OnLoadContent(m_delayResourceQueue, 1);
-			}
-			else
-			{
-				SubSystem.OnLoadContent(m_delayResourceQueue,1);
-			}
-			
-			SubSystem.Log.WriteLine(this.getName() + " thread end.");
-		}
-	}
-
-	static ThreadGroup m_threadGroup0 = new ThreadGroup( "loading0" );
-	static ThreadGroup m_threadGroup1 = new ThreadGroup( "loading1" );
-	LoadingThread m_loadingThread1 = null;
-	LoadingThread m_loadingThread2 = null;
-	*/
-	int m_nbOnSurfaceCreated = 0;
+	public Object m_locker = new Object();
+	//int m_nbOnSurfaceCreated = 0;
 	
 	public SurfaceRenderer( GameMain gameMain )
 	{
@@ -377,72 +218,143 @@ class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
 	// 最初に呼ばれる
 	public void onSurfaceCreated(GL10 gl, EGLConfig config)
 	{
-		SubSystem.Log.WriteLine(String.format("onSurfaceCreated() %d", m_nbOnSurfaceCreated));
+		//SubSystem.Log.WriteLine(String.format("onSurfaceCreated() %d", m_nbOnSurfaceCreated));
 		OnSurfaceCreated();
 	}
 
+	static class UpdateThread extends Thread
+	{
+		public SurfaceRenderer m_surfaceRenderer = null;
+		
+		public UpdateThread(ThreadGroup threadGroup, SurfaceRenderer surfaceRenderer)
+		{
+			super(threadGroup, String.format("update"));
+			m_surfaceRenderer = surfaceRenderer;
+		}
+
+		@Override
+		public void run()
+		{
+			double interval = 1.0/60.0;
+			double prev = SubSystem.Timer.GetCurrentTime() - interval;
+			while(true)
+			{
+				double time = SubSystem.Timer.GetCurrentTime();
+				boolean isInterrupted = false;
+				if( interval <= (time - prev) )
+				{
+					int width = 0;
+					int height = 0;
+					synchronized(m_surfaceRenderer.m_locker)
+					{
+						width = m_surfaceRenderer.SurfaceWidth;
+						height = m_surfaceRenderer.SurfaceHeight;
+					}
+					
+					if
+					( 
+						SubSystem.Render.ScanOutWidth != width ||
+						SubSystem.Render.ScanOutHeight != height
+					)
+					{
+						SubSystem.Render.ScanOutWidth = width;
+						SubSystem.Render.ScanOutHeight = height;
+
+						m_surfaceRenderer.m_gameMain.OnSurfaceChanged(width, height);
+					}
+					m_surfaceRenderer.OnUpdate();
+					
+					while(SubSystem.RenderSystem.BeginBuilderFrame()==false)
+					{
+						if(isInterrupted())
+						{
+							isInterrupted = true;
+							break;
+						}
+						Thread.yield();
+					}
+					
+					if(isInterrupted)
+					{
+						break;
+					}
+					
+					m_surfaceRenderer.OnRender();
+					SubSystem.RenderSystem.EndBuilderFrame();
+					
+					prev = time;
+				}
+			
+				if(isInterrupted() || isInterrupted)
+				{
+					break;
+				}
+				Thread.yield();
+			}
+			m_surfaceRenderer = null;
+		}
+	}
+	
+	ThreadGroup m_threadGroupUpdate = new ThreadGroup("update");
+	UpdateThread m_updateThread;
 	private synchronized void OnSurfaceCreated()
 	{
-		if (m_nbOnSurfaceCreated <= 0)
-		{			
-			/*
-			SubSystem.Create(this);
-			DelayResourceQueue drq = SubSystem.DelayResourceQueue;
-				
-			m_gameMain.OnCreate(drq);
+		m_form = new UiForm();
+		m_form.Add((m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50))));
+
+		DebugLog.Error.WriteLines(Shader.Error);
 			
-
-			m_loadingThread1 = new LoadingThread(drq,m_threadGroup0, m_gameMain, 0);
-			m_loadingThread2 = new LoadingThread(drq,m_threadGroup1, m_gameMain, 1);
-
-			SubSystem.DelayResourceQueue.RegisterThread(m_loadingThread1);
-			SubSystem.DelayResourceQueue.RegisterThread(m_loadingThread2);
-
-			m_loadingThread1.start();
-			m_loadingThread2.start();
-			*/
-			m_form = new UiForm();
-			m_form.Add((m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50))));
-
-			DebugLog.Error.WriteLines(Shader.Error);
-		}
-		else
-		{
-			m_gameMain.m_fStartTime = SubSystem.Timer.FrameTime;
-			SubSystem. DelayResourceQueue.ReloadResources();
-		}
-		m_nbOnSurfaceCreated++;
+		m_updateThread = new UpdateThread(m_threadGroupUpdate,this);
+		m_updateThread.start();
 	}
 
+	//public AtomicInteger m_locker = new AtomicInteger();
+	
+	
 	///////////////////////////////////////////////////////////////////////////
 	// サーフェイスのサイズ変更時とかに呼ばれる
 	public void onSurfaceChanged(GL10 gl, int width, int height) 
 	{
-		SubSystem.Log.WriteLine("onSurfaceChanged()");
-		SurfaceWidth = width;
-		SurfaceHeight = height;
-		SubSystem.Render.ScanOutWidth = width;
-		SubSystem.Render.ScanOutHeight = height;
-
-		m_gameMain.OnSurfaceChanged(width, height);
+		SubSystem.Log.WriteLine("\tonSurfaceChanged()" + width + "x" + height);
+		synchronized(m_locker)
+		{
+			SurfaceWidth = width;
+			SurfaceHeight = height;
+		}
 	}
+	
+	public void OnDestroy()
+	{
+		m_updateThread.interrupt();
+		
+		try
+		{
+			m_updateThread.join();
+		}
+		catch(java.lang.InterruptedException ex)
+		{
+			
+		}
+		SubSystem.Log.WriteLine("\tOnDestroy()" );
+		m_updateThread = null;
+	}
+	
 
 	public int m_mem = 0;
 	///////////////////////////////////////////////////////////////////////////
 	// 毎フレーム呼ばれるやつ
-	public void onDrawFrame(GL10 gl)
+	public void OnUpdate()
 	{
 		SubSystem.Timer.Update();
 		final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
-		SubSystem.DelayResourceQueue.Update(fElapsedTime);
+		//SubSystem.DelayResourceQueue.Update(fElapsedTime);
 
-		final Render r = SubSystem.Render;
+		//final Render r = SubSystem.Render;
 
 		if(SubSystem.MinimumMarker.Done)
 		{
 			SubSystem.FramePointer.Update(fElapsedTime);	
 
-			
 			m_form.Update(SubSystem.FramePointer, fElapsedTime);
 			if (m_buttonDebug.IsPush())
 			{
@@ -450,40 +362,50 @@ class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
 			}
 
 			m_gameMain.OnUpdate();
-
-			SubSystem.RenderSystem.BeginBuilerFrame();
-
+		}
+	}
+	
+	public void OnRender()
+	{
+		final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
+		
+		if(SubSystem.MinimumMarker.Done)
+		{
 			final RenderContext rc = SubSystem.RenderSystem.GetRenderContext(0);
 			m_gameMain.OnRender(rc);
+			
+			
+			final GfxCommandContext gfxc = rc.GetCommandContext();
+			final MatrixCache mc = rc.GetMatrixCache();
+			
+			gfxc.SetViewport(0,0,SurfaceWidth,SurfaceHeight);
 
-			if (SubSystem.DebugFontReadyMarker.Done)
+			Float4x4 matrixOrtho = Float4x4.Local();
+			Matrix.orthoM(matrixOrtho.Values, 0, 0, SurfaceWidth, SurfaceHeight, 0, -1.0f, 1.0f);
+
+			mc.SetView(Float4x4.Identity(Float4x4.Local()));
+			mc.SetProjection(matrixOrtho);
+			mc.SetWorld(Float4x4.Identity(Float4x4.Local()));
+
+			final RasterizerState disableCullFace = new RasterizerState(false, ECullFace.Back,EFrontFace.CCW);
+
+			gfxc.SetRasterizerState(disableCullFace);
+			
+			final BasicRender br = rc.GetBasicRender();
+
+			if (SubSystem.DebugFont.IsReady())
 			{
 				final FontRender fr = rc.GetFontRender();
-				final BasicRender br = rc.GetBasicRender();
-				final MatrixCache mc = rc.GetMatrixCache();
-				final GfxCommandContext gfxc = rc.GetCommandContext();
 				final BitmapFont bf = rc.GetBitmapFont();
 
-				//GLES20.glClearColor(0.0f, 0.0f, 0.1f, 1.f); 
-				//GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+				//gfxc.SetClearColor(0.0f, 0.0f, 0.1f, 1.f); 
+				//gfxc.Clear(EClearBuffer.ColorDepthStencil);
 
+				
 
-				Float4x4 matrixOrtho = Float4x4.Local();
-				Matrix.orthoM(matrixOrtho.Values, 0, 0, SurfaceWidth, SurfaceHeight, 0, -1.0f, 1.0f);
-
-				mc.SetView(Float4x4.Identity(Float4x4.Local()));
-				mc.SetProjection(matrixOrtho);
-				mc.SetWorld(Float4x4.Identity(Float4x4.Local()));
-				//mc.Update();
-
-				//GLES20.glDisable(GLES20.GL_CULL_FACE);
-
-				final RasterizerState disableCullFace = new RasterizerState(false, ECullFace.Back,EFrontFace.CCW);
-
-				gfxc.SetRasterizerState(disableCullFace);
-
-
-				if (m_isDispError && fr.m_font.IsReady)
+				
+				fr.SetSize(16.0f);
+				if (m_isDispError )
 				{
 					fr.Begin();
 					Float3 f3Position = new Float3(
@@ -496,19 +418,19 @@ class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
 						int ii = (rp + i) % DebugLog.Error.Buffers.length;
 
 						fr.Draw(f3Position, DebugLog.Error.Buffers[ii]);
-						f3Position.Y += fr.m_font.m_nFontSize;
+						f3Position.Y += fr.m_fSize;
 					}
 					fr.End();
 
 				}
 
 				fr.Begin();
-				fr.Draw(0.0f, 0.0f, 0.0f, String.format("FPS:%3.3f", 1.0f / fElapsedTime));
+				fr.Draw(0.0f, 0.0f, 0.0f, String.format("こんにちわ世界 FPS:%3.3f", 1.0f / fElapsedTime));
 				long freeMem = Runtime.getRuntime().freeMemory();
 				long totalMem = Runtime.getRuntime().totalMemory();
 				fr.Draw(0.0f, fr.m_fSize, 0.0f, String.format("Mem:%d/%d", (int) (totalMem - freeMem), (int) totalMem));
 				fr.Draw(0.0f, fr.m_fSize * 2.0f, 0.0f, String.format("ScanOut:%dx%d", 
-																	 (int) ScanOutWidth, (int) ScanOutHeight));
+																	 (int) SurfaceWidth, (int) SurfaceHeight));
 
 				fr.Draw(0.0f, fr.m_fSize * 3, 0.0f, String.format("BackBuffer:%dx%d %dx%d", 
 																  (int) m_gameMain.m_frameBuffer.Width,
@@ -516,12 +438,8 @@ class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
 																  (int) ((RenderTexture) m_gameMain.m_frameBuffer.ColorRenderTexture).PotWidth,
 																  (int) ((RenderTexture) m_gameMain.m_frameBuffer.ColorRenderTexture).PotHeight));
 
-				Float3 f3 = m_gameMain.m_player.m_trackBall.EulerAngularVelocity;
-				/*
-				 m_f3Euler.X = (Float.isNaN( m_f3Euler.X ) ? m_f3Euler.X : f3.X );
-				 m_f3Euler.Y = (Float.isNaN( m_f3Euler.Y ) ? m_f3Euler.Y : f3.Y );
-				 m_f3Euler.Z = (Float.isNaN( m_f3Euler.Z ) ? m_f3Euler.Z : f3.Z );
-				 */
+				fr.Draw(0.0f, fr.m_fSize *4.0f,0.0f,String.format("Core %d",java.lang.Runtime.getRuntime().availableProcessors()));											  
+				
 				long usemem = totalMem - freeMem;
 				if (m_mem <= 0)
 				{
@@ -537,44 +455,75 @@ class  SurfaceRenderer extends Render implements GLSurfaceView.Renderer
 
 				//sfr.Draw( 0.0f, fr.m_fSize*2.0f, 0.0f, String.format( "%f %f %f", m_f3Euler.X, m_f3Euler.Y, m_f3Euler.Z ) );
 				fr.End();
-
-				m_form.Render(br,bf);
-
-				for (FramePointer.Pointer pointer : SubSystem.FramePointer.Pointers)
+				
+				if( m_form != null )
 				{
-					if (pointer.Push)
-					{
-
-						br.SetColor(1.0f, 0.0f, 0.0f, 1.0f);
-					}
-					else if (pointer.Release)
-					{
-						br.SetColor(0.0f, 0.0f, 1.0f, 1.0f);
-					}
-					else if (pointer.Down)
-					{
-						br.SetColor(0.0f, 1.0f, 0.0f, 1.0f);
-					}
-					else if (pointer.Up)
-					{
-						continue;
-					}
-
-					br.Arc(pointer.Position.X, pointer.Position.Y, 64.0f, 16);
+					m_form.Render(br,bf);
 				}
+				
 			}
+			else
+			{
+				gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f); 
+				gfxc.Clear(EClearBuffer.ColorDepthStencil);
+			}
+			
+			
+			
+			for (FramePointer.Pointer pointer : SubSystem.FramePointer.Pointers)
+			{
+				if (pointer.Push)
+				{
+					br.SetColor(1.0f, 0.0f, 0.0f, 1.0f);
+				}
+				else if (pointer.Release)
+				{
+					br.SetColor(0.0f, 0.0f, 1.0f, 1.0f);
+				}
+				else if (pointer.Down)
+				{
+					br.SetColor(0.0f, 1.0f, 0.0f, 1.0f);
+				}
+				else if (pointer.Up)
+				{
+					continue;
+				}
 
-			SubSystem.RenderSystem.EndBuilderFrame();
+				br.Arc(pointer.Position.X, pointer.Position.Y, 64.0f, 16);
+			}
+		}
+	}
 
-			SubSystem.RenderSystem.UpdateResources();
-			SubSystem.RenderSystem.ProcessCommands(r);
+	
+	public void onDrawFrame(GL10 gl)
+	{
+		//SubSystem.Timer.Update();
+		final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
+		if( SubSystem.DelayResourceQueue != null )
+		{
+			SubSystem.DelayResourceQueue.Update(fElapsedTime);
+		}
+
+		final Render r = SubSystem.Render;
+
+		
+		if(SubSystem.MinimumMarker.Done)
+		{
+			if( SubSystem.RenderSystem != null )
+			{
+				while(SubSystem.RenderSystem.UpdateResources()==false)
+				{
+					Thread.yield();
+				}
+				SubSystem.RenderSystem.ProcessCommands(r);
+			}
+			
 		}
 		else
 		{
 			r.SetClearColor(0.0f,0.0f,1.0f,0.0f);
 			r.Clear(EClearBuffer.ColorDepthStencil);
 		}
-
 	}
 }
 

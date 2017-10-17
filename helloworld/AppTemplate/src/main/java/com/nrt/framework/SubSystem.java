@@ -12,6 +12,8 @@ import com.nrt.model.*;
 import com.nrt.font.*;
 import com.nrt.input.*;
 
+import java.lang.ThreadGroup;
+
 public class SubSystem
 {
 	//. アプリで唯一じゃないとじゃないとマズいもの.
@@ -21,11 +23,24 @@ public class SubSystem
 	public static Loader Loader = null;
 	public static TextViewLog Log = null;
 	
-	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler )
+	public static AppFrame m_appFrame = null;
+
+	public static ThreadGroup m_threadGroupAppFrame = new ThreadGroup("AppFrame");
+	public static UpdateThread m_threadAppFrame = null;
+	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, AppFrame appFrame )
 	{
 		Loader = new Loader( assetManager );
 		Log = new TextViewLog( handler, textView );
+		
+		if(m_appFrame == null)
+		{
+			m_appFrame = appFrame;
+			m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame,appFrame);
+			m_threadAppFrame.start();
+		}
 	}
+	
+	
 	
 	
 	//public static BitmapFont BitmapFont = null;
@@ -50,28 +65,29 @@ public class SubSystem
 
 
 	public static DelayResourceQueueMarker MinimumMarker = new DelayResourceQueueMarker("MinimumSubSystem" );
-	public static DelayResourceQueueMarker DebugFontReadyMarker = new DelayResourceQueueMarker("DebugFont");
+	//public static DelayResourceQueueMarker DebugFontReadyMarker = new DelayResourceQueueMarker("DebugFont");
 	
 	public static DelayResourceQueueMarker SubSystemReadyMarker = new DelayResourceQueueMarker("SubSystemReady");
 	
-	public static void OnCreate(final Render r) //throws ThreadForceDestroyException
+	public static JobScheduler JobScheduler = new JobScheduler(4);
+	
+	public static Font DebugFont = null;
+	public static void OnCreate()
 	{
+		Render = new Render();
 		FramePointer = new FramePointer();
 		Timer = new FrameTimer();		
-		Render = r;
+		
 		final DelayResourceQueue drq = DelayResourceQueue;
 		
-		//MatrixCache = new MatrixCache();
-		//BasicRender = new BasicRender(drq);//1024 * 1024 * 4, 1024 * 1024);
-		//ModelRender = new ModelRender(null, BasicRender, Loader);
 		RenderSystem = new RenderSystem(drq,new RenderSystem.Configuration(), m_patterns);
-		//DelayResourceQueue = new DelayResourceQueue();
-
-		//BitmapFont = new BitmapFont( drq, m_patterns );
-	
+		
+		DebugFont = new Font(SubSystem.JobScheduler, drq, 1024, 16, 1, 1);
+		SubSystem.RenderSystem.SetFont( DebugFont );
+		
 		DelayResourceQueue.Add( MinimumMarker );
 		
-		DelayResourceLoader = new DelayResourceLoader( 3, Log );
+		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
 
 		DelayResourceLoader.RegisterJob
 		( 
@@ -87,26 +103,7 @@ public class SubSystem
 			}
 		);
 		
-		DelayResourceLoader.RegisterJob
-		(
-			"SubSystem DebugFont", DelayResourceQueue,
-			new DelayResourceLoader.Job()
-			{
-				@Override public void OnLoadContent(DelayResourceQueue drq)
-				{
-					Font fontDebug = new Font(drq, 1024, 16, 1, 1);
-					SubSystem.RenderSystem.SetFont( fontDebug );
-					/*
-					DebugFont = new FontRender(drq);
-					DebugFont.SetFont(fontDebug);
-					DebugFont.SetSize(16);
-					DebugFont.SetFontColor(0xffffffff);
-					DebugFont.SetBoarderColor(0xff000000);
-					*/
-					drq.Add( DebugFontReadyMarker );		
-				}
-			}
-		);
+		
 	}
 	/*
 	public static void OnLoadContent( DelayResourceQueue drq, int iJob )

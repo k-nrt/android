@@ -47,7 +47,7 @@ public class Shader extends RenderResource
 	@Override
 	public void Apply()
 	{
-		SubSystem.Log.WriteLine( "apply shader" );
+		//SubSystem.Log.WriteLine( "apply shader" );
 		Name = GLES20.glCreateShader(Type.Value);
 		if (Name == 0)
 		{

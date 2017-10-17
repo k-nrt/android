@@ -1,5 +1,7 @@
 package com.nrt.basic;
 
+import android.util.Log;
+
 public class TextViewLog
 {
 	public android.os.Handler m_handler = null;
@@ -42,6 +44,7 @@ public class TextViewLog
 		{
 			m_handler.post( new TextHandler( strText, m_textView ) );
 		}
+		Log.d( "log", strText );
 	}
 	
 	public void WriteLine( String strText )
@@ -50,6 +53,7 @@ public class TextViewLog
 		{
 			m_handler.post( new TextHandler( strText + "\n", m_textView ) );
 		}
+		Log.d( "log", strText );
 	}
 }
 

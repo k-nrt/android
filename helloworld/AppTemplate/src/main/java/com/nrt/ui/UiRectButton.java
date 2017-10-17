@@ -123,6 +123,7 @@ public class UiRectButton implements UiItem
 	@Override
 	public void OnRender(final BasicRender br, final BitmapFont font)
 	{
+		
 		if (m_nbPrevPointers < m_nbPointers)
 		{
 			br.SetColor(1, 0, 0, 1);
@@ -136,6 +137,7 @@ public class UiRectButton implements UiItem
 			br.SetColor(0, 1, 0, 1);
 		}
 		br.Rectangle(Enter);
+		
 	}
 
 	public boolean IsPush()
