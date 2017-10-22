@@ -27,28 +27,25 @@ public class SubSystem
 
 	public static ThreadGroup m_threadGroupAppFrame = new ThreadGroup("AppFrame");
 	public static UpdateThread m_threadAppFrame = null;
+
 	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, AppFrame appFrame )
 	{
 		Loader = new Loader( assetManager );
 		Log = new TextViewLog( handler, textView );
-		
-		if(m_appFrame == null)
+
+        Render = new Render();
+        FramePointer = new FramePointer();
+        Timer = new FrameTimer();
+
+        if(m_appFrame == null)
 		{
 			m_appFrame = appFrame;
 			m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame,appFrame);
-			m_threadAppFrame.start();
+            m_threadAppFrame.start();
 		}
 	}
 	
-	
-	
-	
-	//public static BitmapFont BitmapFont = null;
-	//public static FontRender DebugFont = null;
-
 	public static Render Render = null;
-	//public static BasicRender BasicRender = null;
-	//public static MatrixCache MatrixCache = null;
 	public static RenderSystem RenderSystem = null;
 
 	public static ModelRender ModelRender = null;
@@ -57,27 +54,18 @@ public class SubSystem
 
 	public static Rand Rand = new Rand();
 	public static FrameTimer Timer = null; 
-	//public static DebugLog Error = new DebugLog(45);
 
 	public static Debug Debug = null;
 	
 	public static DelayResourceLoader DelayResourceLoader = null;
-
-
 	public static DelayResourceQueueMarker MinimumMarker = new DelayResourceQueueMarker("MinimumSubSystem" );
-	//public static DelayResourceQueueMarker DebugFontReadyMarker = new DelayResourceQueueMarker("DebugFont");
-	
 	public static DelayResourceQueueMarker SubSystemReadyMarker = new DelayResourceQueueMarker("SubSystemReady");
-	
 	public static JobScheduler JobScheduler = new JobScheduler(4);
-	
 	public static Font DebugFont = null;
+
 	public static void OnCreate()
 	{
-		Render = new Render();
-		FramePointer = new FramePointer();
-		Timer = new FrameTimer();		
-		
+
 		final DelayResourceQueue drq = DelayResourceQueue;
 		
 		RenderSystem = new RenderSystem(drq,new RenderSystem.Configuration(), m_patterns);
@@ -102,8 +90,8 @@ public class SubSystem
 				}
 			}
 		);
-		
-		
+
+
 	}
 	/*
 	public static void OnLoadContent( DelayResourceQueue drq, int iJob )

@@ -4,6 +4,7 @@ import java.lang.Thread;
 
 import com.nrt.ui.UiForm;
 import com.nrt.ui.UiRectButton;
+import com.nrt.basic.Rect;
 import com.nrt.render.*;
 
 import com.nrt.math.Float3;
@@ -39,6 +40,10 @@ public class UpdateThread extends Thread
 	public UpdateThread(ThreadGroup threadGroup, AppFrame appFrame)
 	{
 		super(threadGroup, String.format("update"));
+
+		m_form = new UiForm();
+		m_form.Add((m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50))));
+
 		m_appFrame = appFrame;
 	}
 	
@@ -253,8 +258,8 @@ public class UpdateThread extends Thread
 			}
 			else
 			{
-				gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f); 
-				gfxc.Clear(EClearBuffer.ColorDepthStencil);
+				//gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f);
+				//gfxc.Clear(EClearBuffer.ColorDepthStencil);
 			}
 
 

@@ -29,7 +29,6 @@ import com.nrt.math.Float3;
 import com.nrt.math.Float4x4;
 import java.util.logging.*;
 import java.util.concurrent.atomic.*;
-import org.apache.commons.codec.language.bm.*;
 
 public class MainActivity extends Activity
 {
