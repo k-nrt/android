@@ -18,7 +18,6 @@ import com.nrt.font.BitmapFont;
 import com.nrt.basic.DebugLog;
 import com.nrt.input.FramePointer;
 
-
 public class UpdateThread extends Thread
 {
 	public AppFrame m_appFrame = null;
@@ -31,18 +30,19 @@ public class UpdateThread extends Thread
 	public double m_updateIntervalInSec = 1.0/60.0;
 	
 	public UiForm m_form = new UiForm();
-
 	public UiRectButton m_buttonDebug = null;
-	public boolean m_isDispError = true;
-	
+
+	public boolean m_isDispError = true;	
 	public long m_memory = 0;
 
 	public UpdateThread(ThreadGroup threadGroup, AppFrame appFrame)
 	{
 		super(threadGroup, String.format("update"));
 
+		m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50));
+		
 		m_form = new UiForm();
-		m_form.Add((m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50))));
+		m_form.Add(m_buttonDebug);
 
 		m_appFrame = appFrame;
 	}
@@ -136,7 +136,6 @@ public class UpdateThread extends Thread
 		m_appFrame = null;
 	}
 	
-	
 	private void OnUpdate()
 	{
 		SubSystem.Timer.Update();
@@ -156,21 +155,17 @@ public class UpdateThread extends Thread
 		}
 	}
 	
-	
-	
 	public void OnRender()
 	{
 		final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
-
+		final RenderContext rc = SubSystem.RenderSystem.GetRenderContext(0);
+		final GfxCommandContext gfxc = rc.GetCommandContext();
+		
 		if(SubSystem.MinimumMarker.Done)
 		{
-			final RenderContext rc = SubSystem.RenderSystem.GetRenderContext(0);
 			m_appFrame.OnRender(rc);
 
-
-			final GfxCommandContext gfxc = rc.GetCommandContext();
 			final MatrixCache mc = rc.GetMatrixCache();
-
 			gfxc.SetViewport(0,0,m_surfaceWidth,m_surfaceHeight);
 
 			Float4x4 matrixOrtho = Float4x4.Local();
@@ -190,13 +185,7 @@ public class UpdateThread extends Thread
 			{
 				final FontRender fr = rc.GetFontRender();
 				final BitmapFont bf = rc.GetBitmapFont();
-
-				//gfxc.SetClearColor(0.0f, 0.0f, 0.1f, 1.f); 
-				//gfxc.Clear(EClearBuffer.ColorDepthStencil);
-
-
-
-
+				
 				fr.SetSize(16.0f);
 				if (m_isDispError )
 				{
@@ -214,7 +203,6 @@ public class UpdateThread extends Thread
 						f3Position.Y += fr.m_fSize;
 					}
 					fr.End();
-
 				}
 
 				fr.Begin();
@@ -223,7 +211,7 @@ public class UpdateThread extends Thread
 				long totalMem = Runtime.getRuntime().totalMemory();
 				fr.Draw(0.0f, fr.m_fSize, 0.0f, String.format("Mem:%d/%d", (int) (totalMem - freeMem), (int) totalMem));
 				fr.Draw(0.0f, fr.m_fSize * 2.0f, 0.0f, String.format("ScanOut:%dx%d", 
-																	 (int) m_surfaceWidth, (int) m_surfaceHeight));
+																	 m_surfaceWidth, m_surfaceHeight));
 
 				/*
 				fr.Draw(0.0f, fr.m_fSize * 3, 0.0f, String.format("BackBuffer:%dx%d %dx%d", 
@@ -247,22 +235,13 @@ public class UpdateThread extends Thread
 					}
 				}
 
-				//sfr.Draw( 0.0f, fr.m_fSize*2.0f, 0.0f, String.format( "%f %f %f", m_f3Euler.X, m_f3Euler.Y, m_f3Euler.Z ) );
 				fr.End();
 
 				if( m_form != null )
 				{
 					m_form.Render(br,bf);
 				}
-
 			}
-			else
-			{
-				//gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f);
-				//gfxc.Clear(EClearBuffer.ColorDepthStencil);
-			}
-
-
 
 			for (FramePointer.Pointer pointer : SubSystem.FramePointer.Pointers)
 			{
@@ -285,6 +264,11 @@ public class UpdateThread extends Thread
 
 				br.Arc(pointer.Position.X, pointer.Position.Y, 64.0f, 16);
 			}
+		}
+		else
+		{
+			gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f);
+			gfxc.Clear(EClearBuffer.ColorDepthStencil);
 		}
 	}
 }

@@ -64,7 +64,6 @@ public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 
 		final Render r = SubSystem.Render;
 
-
 		if(SubSystem.MinimumMarker.Done)
 		{
 			if( SubSystem.RenderSystem != null )
