@@ -17,7 +17,7 @@ import java.lang.ThreadGroup;
 public class SubSystem
 {
 	//. アプリで唯一じゃないとじゃないとマズいもの.
-	public static DelayResourceQueue DelayResourceQueue = new DelayResourceQueue();
+	public static DelayResourceQueue DelayResourceQueue = null;
 
 	//. アクティビティから貰ってくるもの.
 	public static Loader Loader = null;
@@ -25,11 +25,14 @@ public class SubSystem
 	
 	public static AppFrame m_appFrame = null;
 
-	public static ThreadGroup m_threadGroupAppFrame = new ThreadGroup("AppFrame");
+	public static ThreadGroup m_threadGroupAppFrame = null;
 	public static UpdateThread m_threadAppFrame = null;
+
+	public static JobScheduler JobScheduler = null;
 
 	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, AppFrame appFrame )
 	{
+		DelayResourceQueue = new DelayResourceQueue();
 		Loader = new Loader( assetManager );
 		Log = new TextViewLog( handler, textView );
 
@@ -37,12 +40,37 @@ public class SubSystem
         FramePointer = new FramePointer();
         Timer = new FrameTimer();
 
-        if(m_appFrame == null)
-		{
-			m_appFrame = appFrame;
-			m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame,appFrame);
-            m_threadAppFrame.start();
-		}
+		JobScheduler = new JobScheduler(4);
+		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
+		
+		m_appFrame = appFrame;
+		m_threadGroupAppFrame = new ThreadGroup("AppFrame");
+
+		m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame,m_appFrame);
+		m_threadAppFrame.start();
+		OnCreate();
+	}
+	
+	public static void Exit()
+	{
+		m_threadAppFrame.InterruptAndJoin();
+		m_threadAppFrame = null;
+		m_appFrame = null;
+		
+		m_threadGroupAppFrame = null;
+		
+		DelayResourceLoader = null;
+		
+		JobScheduler.DestroyAllWorkers();
+		JobScheduler = null;
+
+		Timer = null;
+		FramePointer = null;
+		Render = null;
+		
+		Log = null;
+		Loader = null;
+		DelayResourceQueue = null;
 	}
 	
 	public static Render Render = null;
@@ -60,22 +88,31 @@ public class SubSystem
 	public static DelayResourceLoader DelayResourceLoader = null;
 	public static DelayResourceQueueMarker MinimumMarker = new DelayResourceQueueMarker("MinimumSubSystem" );
 	public static DelayResourceQueueMarker SubSystemReadyMarker = new DelayResourceQueueMarker("SubSystemReady");
-	public static JobScheduler JobScheduler = new JobScheduler(4);
 	public static Font DebugFont = null;
 
-	public static void OnCreate()
+	private static void OnCreate()
 	{
 
-		final DelayResourceQueue drq = DelayResourceQueue;
+		//final DelayResourceQueue drq = DelayResourceQueue;
 		
-		RenderSystem = new RenderSystem(drq,new RenderSystem.Configuration(), m_patterns);
+		DelayResourceLoader.RegisterJob
+		(
+			"SubSystem RenderSystem", DelayResourceQueue,
+			new DelayResourceLoader.Job()
+			{
+				@Override public void OnLoadContent(DelayResourceQueue drq)
+				{
+					RenderSystem = new RenderSystem(drq,new RenderSystem.Configuration(), m_patterns);
+
+					DebugFont = new Font(SubSystem.JobScheduler, drq, 1024, 16, 1, 1);
+					SubSystem.RenderSystem.SetFont( DebugFont );
+
+					DelayResourceQueue.Add( MinimumMarker );
+				}
+			}
+		);
 		
-		DebugFont = new Font(SubSystem.JobScheduler, drq, 1024, 16, 1, 1);
-		SubSystem.RenderSystem.SetFont( DebugFont );
 		
-		DelayResourceQueue.Add( MinimumMarker );
-		
-		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
 
 		DelayResourceLoader.RegisterJob
 		( 
@@ -91,7 +128,18 @@ public class SubSystem
 			}
 		);
 
-
+		DelayResourceLoader.RegisterJob
+		( 
+			"SubSystem GameMain", DelayResourceQueue,
+			new DelayResourceLoader.Job()
+			{
+				@Override public void OnLoadContent(DelayResourceQueue drq)
+				{
+					
+					m_appFrame.OnCreate(drq);
+				}
+			}
+		);
 	}
 	/*
 	public static void OnLoadContent( DelayResourceQueue drq, int iJob )

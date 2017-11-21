@@ -35,22 +35,11 @@ public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 		}
 	}
 
+	
 	public void OnDestroy()
 	{
-		/*
-		m_updateThread.interrupt();
-
-		try
-		{
-			m_updateThread.join();
-		}
-		catch(java.lang.InterruptedException ex)
-		{
-
-		}
-		SubSystem.Log.WriteLine("\tOnDestroy()" );
+		
 		m_updateThread = null;
-		*/
 	}
 	
 	public void onDrawFrame(GL10 gl)

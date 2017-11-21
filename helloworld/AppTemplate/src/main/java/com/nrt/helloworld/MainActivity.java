@@ -36,7 +36,7 @@ public class MainActivity extends Activity
 
 	private android.os.Handler m_handler = new android.os.Handler();
 
-	private static GameMain m_gameMain = new GameMain();
+	private GameMain m_gameMain = new GameMain();
 	
 	static int m_nbOnCreated = 0;
 	
@@ -46,7 +46,7 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		android.util.Log.d("create","create");
+		//android.util.Log.d("create","create");
 		
 		//. Initialize minimum subsystem instances.		
 		SubSystem.Initialize
@@ -61,11 +61,11 @@ public class MainActivity extends Activity
 		m_renderView = (RenderSurfaceView)this.findViewById(R.id.glview);
 		m_renderView.Initialize();
 		
+		/*
 		if( m_nbOnCreated <= 0 )
 		{
 			//. Initialize minimum rendering resources.
-			SubSystem.OnCreate();
-			DelayResourceQueue drq = SubSystem.DelayResourceQueue;
+			//SubSystem.OnCreate();
 	
 			m_gameMain.OnCreate(drq);
 		}
@@ -73,7 +73,10 @@ public class MainActivity extends Activity
 		{
 			SubSystem.DelayResourceQueue.ReloadResources();
 		}
+		*/
+		//DelayResourceQueue drq = SubSystem.DelayResourceQueue;
 		
+		//m_gameMain.OnCreate(drq);
 		SubSystem.Log.WriteLine("MainActivity.onCreate() " + m_nbOnCreated);
 		m_nbOnCreated++;
 	}
@@ -115,7 +118,11 @@ public class MainActivity extends Activity
 	{
 		// TODO: Implement this method
 		super.onDestroy();
-		m_renderView.onDestroy();
+		
+		
+		
+		SubSystem.Exit();
+		
 		SubSystem.Log.WriteLine("MainActivity.onDestroy()");
 	}
 }
@@ -180,19 +187,12 @@ class RenderSurfaceView extends GLSurfaceView
 			SubSystem.Log.WriteLine( "onDetachedFromWindow" );
 		}
 	}
-
-	
-	
-	public void onDestroy()
-	{
-		m_surfaceRenderer.OnDestroy();
-		//super.onDestroy();
-	}
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 ///ビュー用のレンダラ―
+/*
 class SurfaceRenderer implements GLSurfaceView.Renderer
 {
 	private int SurfaceWidth = 0;
@@ -525,5 +525,5 @@ class SurfaceRenderer implements GLSurfaceView.Renderer
 		}
 	}
 }
-
+*/
 

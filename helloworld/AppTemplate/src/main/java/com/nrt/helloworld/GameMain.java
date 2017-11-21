@@ -2,7 +2,7 @@ package com.nrt.helloworld;
 
 import java.io.InputStream;
 
-  import com.nrt.basic.*;
+import com.nrt.basic.*;
 import com.nrt.math.FMath;
 import com.nrt.math.Float3;
 import com.nrt.math.Float4x4;

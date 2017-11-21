@@ -47,6 +47,20 @@ public class UpdateThread extends Thread
 		m_appFrame = appFrame;
 	}
 	
+	public void InterruptAndJoin()
+	{
+		interrupt();
+
+		try
+		{
+			join();
+		}
+		catch(java.lang.InterruptedException ex)
+		{
+
+		}
+	}
+	
 	public void SetSurfaceSize( int width, int height )
 	{
 		synchronized(m_locker)
