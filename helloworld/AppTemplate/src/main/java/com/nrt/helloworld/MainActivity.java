@@ -36,7 +36,7 @@ public class MainActivity extends Activity
 
 	private android.os.Handler m_handler = new android.os.Handler();
 
-	private GameMain m_gameMain = new GameMain();
+	//private GameMain m_gameMain = new GameMain();
 	
 	static int m_nbOnCreated = 0;
 	
@@ -54,7 +54,13 @@ public class MainActivity extends Activity
 			getResources().getAssets(), 
 			(TextView) findViewById(R.id.logview),
 			m_handler,
-			m_gameMain			
+			new AppFrameFactory()
+			{
+				@Override public AppFrame Create()
+				{
+					return new GameMain();
+				}
+			}	
 		);
 
 		//. Initialize render surface view.

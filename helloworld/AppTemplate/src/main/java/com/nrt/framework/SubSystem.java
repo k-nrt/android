@@ -30,7 +30,7 @@ public class SubSystem
 
 	public static JobScheduler JobScheduler = null;
 
-	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, AppFrame appFrame )
+	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, AppFrameFactory appFrameFactory )
 	{
 		DelayResourceQueue = new DelayResourceQueue();
 		Loader = new Loader( assetManager );
@@ -43,7 +43,7 @@ public class SubSystem
 		JobScheduler = new JobScheduler(4);
 		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
 		
-		m_appFrame = appFrame;
+		m_appFrame = appFrameFactory.Create();
 		m_threadGroupAppFrame = new ThreadGroup("AppFrame");
 
 		m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame,m_appFrame);
