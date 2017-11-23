@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-import android.icu.text.*;
+//import android.icu.text.*;
 import android.widget.*;
 
 public class TextViewLog
