@@ -5,6 +5,7 @@ import android.content.res.*;
 
 import android.widget.TextView;
 import android.os.Handler;
+import android.content.Context;
 
 import com.nrt.basic.*;
 import com.nrt.render.*;
@@ -23,18 +24,18 @@ public class SubSystem
 	public static Loader Loader = null;
 	public static TextViewLog Log = null;
 	
-	public static AppFrame m_appFrame = null;
+	//public static AppFrame m_appFrame = null;
 
 	public static ThreadGroup m_threadGroupAppFrame = null;
 	public static UpdateThread m_threadAppFrame = null;
 
 	public static JobScheduler JobScheduler = null;
 
-	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, AppFrameFactory appFrameFactory )
+	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, Context context, AppFrameFactory appFrameFactory )
 	{
 		DelayResourceQueue = new DelayResourceQueue();
 		Loader = new Loader( assetManager );
-		Log = new TextViewLog( handler, textView );
+		Log = new TextViewLog( handler, textView, context, "debug_log.txt" );
 
         Render = new Render();
         FramePointer = new FramePointer();
@@ -43,10 +44,10 @@ public class SubSystem
 		JobScheduler = new JobScheduler(4);
 		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
 		
-		m_appFrame = appFrameFactory.Create();
+		//m_appFrame = appFrameFactory.Create();
 		m_threadGroupAppFrame = new ThreadGroup("AppFrame");
 
-		m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame,m_appFrame);
+		m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame, appFrameFactory);
 		m_threadAppFrame.start();
 		OnCreate();
 	}
@@ -55,7 +56,7 @@ public class SubSystem
 	{
 		m_threadAppFrame.InterruptAndJoin();
 		m_threadAppFrame = null;
-		m_appFrame = null;
+		//m_appFrame = null;
 		
 		m_threadGroupAppFrame = null;
 		
@@ -91,10 +92,7 @@ public class SubSystem
 	public static Font DebugFont = null;
 
 	private static void OnCreate()
-	{
-
-		//final DelayResourceQueue drq = DelayResourceQueue;
-		
+	{		
 		DelayResourceLoader.RegisterJob
 		(
 			"SubSystem RenderSystem", DelayResourceQueue,
@@ -112,8 +110,6 @@ public class SubSystem
 			}
 		);
 		
-		
-
 		DelayResourceLoader.RegisterJob
 		( 
 			"SubSystem Model", DelayResourceQueue,
@@ -127,6 +123,7 @@ public class SubSystem
 				}
 			}
 		);
+		/*
 
 		DelayResourceLoader.RegisterJob
 		( 
@@ -136,10 +133,11 @@ public class SubSystem
 				@Override public void OnLoadContent(DelayResourceQueue drq)
 				{
 					
-					m_appFrame.OnCreate(drq);
+					//m_appFrame.OnCreate(drq);
 				}
 			}
 		);
+		*/
 	}
 	/*
 	public static void OnLoadContent( DelayResourceQueue drq, int iJob )

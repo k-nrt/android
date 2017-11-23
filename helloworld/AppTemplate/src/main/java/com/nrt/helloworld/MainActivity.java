@@ -54,6 +54,7 @@ public class MainActivity extends Activity
 			getResources().getAssets(), 
 			(TextView) findViewById(R.id.logview),
 			m_handler,
+			getApplicationContext(),
 			new AppFrameFactory()
 			{
 				@Override public AppFrame Create()
@@ -104,32 +105,23 @@ public class MainActivity extends Activity
 	@Override
 	protected void onStart()
 	{
-		// TODO: Implement this method
 		super.onStart();
 		SubSystem.Log.WriteLine("MainActivity.onStart()");
-
 	}
 
 	@Override
 	protected void onStop()
 	{
-		// TODO: Implement this method
 		super.onStop();
 		SubSystem.Log.WriteLine("MainActivity.onStart()");
-
 	}
 
 	@Override
 	protected void onDestroy()
 	{
-		// TODO: Implement this method
-		super.onDestroy();
-		
-		
-		
+		super.onDestroy();		
+		SubSystem.Log.WriteLine("MainActivity.onDestroy()");		
 		SubSystem.Exit();
-		
-		SubSystem.Log.WriteLine("MainActivity.onDestroy()");
 	}
 }
 
@@ -161,7 +153,6 @@ class RenderSurfaceView extends GLSurfaceView
 
 	public boolean onTouchEvent(MotionEvent me)
 	{
-		
 		DevicePointer.OnTouchEvent(me);
 		return true;
 	}
@@ -169,28 +160,25 @@ class RenderSurfaceView extends GLSurfaceView
 	@Override
 	public void onResume()
 	{
-		// TODO: Implement this method
-		//SubSystem.Log.Write( "onResume()" );
+		SubSystem.Log.Write( "RenderSurfaceView.onResume()" );
 		super.onResume();
 	}
 
 	@Override
 	public void onPause()
 	{
-		// TODO: Implement this method
-		//SubSystem.Log.Write( "onPause()" );
+		SubSystem.Log.Write( "RenderSurfaceView.onPause()" );
 		super.onPause();
 	}
 
 	@Override
 	protected void onDetachedFromWindow()
 	{
-		// TODO: Implement this method
 		super.onDetachedFromWindow();
 		
 		if( SubSystem.Log != null )
 		{
-			SubSystem.Log.WriteLine( "onDetachedFromWindow" );
+			SubSystem.Log.WriteLine( "RenderSurfaceView.onDetachedFromWindow" );
 		}
 	}
 }
