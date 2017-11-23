@@ -54,6 +54,7 @@ public class UpdateThread extends Thread
 		{
 
 		}
+		SubSystem.Log.WriteLine(this,"thread joined");
 	}
 
 	public void SetSurfaceSize(int width, int height)
@@ -78,6 +79,7 @@ public class UpdateThread extends Thread
 	{
 		try
 		{
+			SubSystem.Log.WriteLine(this, "Start update thread");
 			m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50));
 
 			m_form = new UiForm();
@@ -155,9 +157,11 @@ public class UpdateThread extends Thread
 		}
 		catch (NullPointerException ex)
 		{
-			SubSystem.Log.Write(ex.toString());
+			SubSystem.Log.WriteLine(ex.toString());
 		}
 		m_appFrame = null;
+		SubSystem.Log.WriteLine(this, "End update thread");
+		
 	}
 
 	private void OnUpdate()

@@ -33,20 +33,16 @@ import java.util.concurrent.atomic.*;
 public class MainActivity extends Activity
 {
 	private RenderSurfaceView m_renderView;
-
 	private android.os.Handler m_handler = new android.os.Handler();
-
-	//private GameMain m_gameMain = new GameMain();
 	
 	static int m_nbOnCreated = 0;
 	
 	// Called when the activity is first created.
-	@Override public void onCreate(Bundle savedInstanceState)
+	@Override 
+	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
-		//android.util.Log.d("create","create");
 		
 		//. Initialize minimum subsystem instances.		
 		SubSystem.Initialize
@@ -66,25 +62,9 @@ public class MainActivity extends Activity
 
 		//. Initialize render surface view.
 		m_renderView = (RenderSurfaceView)this.findViewById(R.id.glview);
-		m_renderView.Initialize();
+		m_renderView.Initialize();		
 		
-		/*
-		if( m_nbOnCreated <= 0 )
-		{
-			//. Initialize minimum rendering resources.
-			//SubSystem.OnCreate();
-	
-			m_gameMain.OnCreate(drq);
-		}
-		else
-		{
-			SubSystem.DelayResourceQueue.ReloadResources();
-		}
-		*/
-		//DelayResourceQueue drq = SubSystem.DelayResourceQueue;
-		
-		//m_gameMain.OnCreate(drq);
-		SubSystem.Log.WriteLine("MainActivity.onCreate() " + m_nbOnCreated);
+		SubSystem.Log.WriteLine(this,"onCreate() =" + m_nbOnCreated);
 		m_nbOnCreated++;
 	}
 
@@ -92,35 +72,35 @@ public class MainActivity extends Activity
 	{
 		super.onResume();
 		m_renderView.onResume();
-		SubSystem.Log.WriteLine("MainActivity.onResume()");
+		SubSystem.Log.WriteLine(this,"onResume()");
 	}
 
 	@Override public void onPause()
 	{
 		super.onPause();
 		m_renderView.onPause();
-		SubSystem.Log.WriteLine("MainActivity.onPause()");
+		SubSystem.Log.WriteLine(this,"onPause()");
 	}
 
 	@Override
 	protected void onStart()
 	{
 		super.onStart();
-		SubSystem.Log.WriteLine("MainActivity.onStart()");
+		SubSystem.Log.WriteLine(this,"onStart()");
 	}
 
 	@Override
 	protected void onStop()
 	{
 		super.onStop();
-		SubSystem.Log.WriteLine("MainActivity.onStart()");
+		SubSystem.Log.WriteLine(this,"onStop()");
 	}
 
 	@Override
 	protected void onDestroy()
 	{
 		super.onDestroy();		
-		SubSystem.Log.WriteLine("MainActivity.onDestroy()");		
+		SubSystem.Log.WriteLine(this,"onDestroy()");		
 		SubSystem.Exit();
 	}
 }
@@ -151,6 +131,7 @@ class RenderSurfaceView extends GLSurfaceView
 		this.setRenderer(m_surfaceRenderer);
 	}
 
+	@Override
 	public boolean onTouchEvent(MotionEvent me)
 	{
 		DevicePointer.OnTouchEvent(me);
@@ -160,14 +141,14 @@ class RenderSurfaceView extends GLSurfaceView
 	@Override
 	public void onResume()
 	{
-		SubSystem.Log.Write( "RenderSurfaceView.onResume()" );
+		SubSystem.Log.WriteLine( this,"onResume()" );
 		super.onResume();
 	}
 
 	@Override
 	public void onPause()
 	{
-		SubSystem.Log.Write( "RenderSurfaceView.onPause()" );
+		SubSystem.Log.WriteLine( this,"onPause()" );
 		super.onPause();
 	}
 
@@ -178,7 +159,7 @@ class RenderSurfaceView extends GLSurfaceView
 		
 		if( SubSystem.Log != null )
 		{
-			SubSystem.Log.WriteLine( "RenderSurfaceView.onDetachedFromWindow" );
+			SubSystem.Log.WriteLine( this, "onDetachedFromWindow" );
 		}
 	}
 }

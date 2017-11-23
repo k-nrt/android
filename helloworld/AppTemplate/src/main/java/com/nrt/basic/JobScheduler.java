@@ -47,7 +47,6 @@ public class JobScheduler
 			m_workers[i] = null;
 		}
 		m_workers = null;
-	}
-	
+	}	
 }
 
