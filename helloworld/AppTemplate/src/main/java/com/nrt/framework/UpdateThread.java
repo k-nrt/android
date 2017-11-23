@@ -18,47 +18,57 @@ import com.nrt.font.BitmapFont;
 import com.nrt.basic.DebugLog;
 import com.nrt.input.FramePointer;
 
-
 public class UpdateThread extends Thread
 {
+	public AppFrameFactory m_appFrameFactory = null;
 	public AppFrame m_appFrame = null;
 
 	public Object m_locker = new Object();
-	
+
 	public int m_surfaceWidth = 0;
 	public int m_surfaceHeight = 0;
-	
-	public double m_updateIntervalInSec = 1.0/60.0;
-	
-	public UiForm m_form = new UiForm();
 
+	public double m_updateIntervalInSec = 1.0 / 60.0;
+
+	public UiForm m_form = null;
 	public UiRectButton m_buttonDebug = null;
-	public boolean m_isDispError = true;
-	
+
+	public boolean m_isDispError = true;	
 	public long m_memory = 0;
 
-	public UpdateThread(ThreadGroup threadGroup, AppFrame appFrame)
+	public UpdateThread(ThreadGroup threadGroup, AppFrameFactory appFrameFactory)
 	{
 		super(threadGroup, String.format("update"));
-
-		m_form = new UiForm();
-		m_form.Add((m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50))));
-
-		m_appFrame = appFrame;
+		m_appFrameFactory = appFrameFactory;
 	}
-	
-	public void SetSurfaceSize( int width, int height )
+
+	public void InterruptAndJoin()
 	{
-		synchronized(m_locker)
+		interrupt();
+
+		try
+		{
+			join();
+		}
+		catch (java.lang.InterruptedException ex)
+		{
+
+		}
+		SubSystem.Log.WriteLine(this,"thread joined");
+	}
+
+	public void SetSurfaceSize(int width, int height)
+	{
+		synchronized (m_locker)
 		{
 			m_surfaceWidth = width;
 			m_surfaceHeight = height;
 		}
 	}
-	
-	public void SetUpdateInterval( double intervalInSec )
+
+	public void SetUpdateInterval(double intervalInSec)
 	{
-		synchronized(m_locker)
+		synchronized (m_locker)
 		{
 			m_updateIntervalInSec = intervalInSec;
 		}
@@ -67,81 +77,98 @@ public class UpdateThread extends Thread
 	@Override
 	public void run()
 	{
-		double interval = m_updateIntervalInSec;
-		double prev = SubSystem.Timer.GetCurrentTime() - interval;
-		while(true)
+		try
 		{
-			synchronized(m_locker)
+			SubSystem.Log.WriteLine(this, "Start update thread");
+			m_buttonDebug = new UiRectButton(new Rect(10, 30, 50, 50));
+
+			m_form = new UiForm();
+			m_form.Add(m_buttonDebug);
+
+			m_appFrame = m_appFrameFactory.Create();
+			m_appFrame.OnCreate(SubSystem.DelayResourceQueue);
+
+			double interval = m_updateIntervalInSec;
+			double prev = SubSystem.Timer.GetCurrentTime() - interval;
+			while (true)
 			{
-				interval = m_updateIntervalInSec;
-			}
-				
-			double time = SubSystem.Timer.GetCurrentTime();
-			boolean isInterrupted = false;
-			if( interval <= (time - prev) )
-			{
-				int width = 0;
-				int height = 0;
-				synchronized(m_locker)
-				{              
-					width = m_surfaceWidth;
-					height = m_surfaceHeight;
-				}
-				
-				if(width == 0 || height == 0 )
+				synchronized (m_locker)
 				{
-					continue;
+					interval = m_updateIntervalInSec;
 				}
 
-				if
-				( 
-					SubSystem.Render.ScanOutWidth != width ||
-					SubSystem.Render.ScanOutHeight != height
-				)
+				double time = SubSystem.Timer.GetCurrentTime();
+				boolean isInterrupted = false;
+				if (interval <= (time - prev))
 				{
-					SubSystem.Render.ScanOutWidth = width;
-					SubSystem.Render.ScanOutHeight = height;
-					m_appFrame.OnSurfaceChanged(width, height);
-				}
-				
-				OnUpdate();
+					int width = 0;
+					int height = 0;
+					synchronized (m_locker)
+					{              
+						width = m_surfaceWidth;
+						height = m_surfaceHeight;
+					}
 
-				while(SubSystem.RenderSystem.BeginBuilderFrame()==false)
-				{                                                          
-					if(isInterrupted())
+					if (width == 0 || height == 0)
+					{
+						continue;
+					}
+
+					if
+					( 
+						SubSystem.Render.ScanOutWidth != width ||
+						SubSystem.Render.ScanOutHeight != height
+					)
+					{
+						SubSystem.Render.ScanOutWidth = width;
+						SubSystem.Render.ScanOutHeight = height;
+						m_appFrame.OnSurfaceChanged(width, height);
+					}
+
+					OnUpdate();
+
+					while (SubSystem.RenderSystem.BeginBuilderFrame() == false)
+					{                                                          
+						if (isInterrupted())
+						{    
+							isInterrupted = true;
+							break;
+						}
+						Thread.yield();
+					}
+
+					if (isInterrupted)
 					{    
-						isInterrupted = true;
 						break;
 					}
-					Thread.yield();
+
+					OnRender();
+
+					SubSystem.RenderSystem.EndBuilderFrame();
+					prev = time;
 				}
 
-				if(isInterrupted)
+				if (isInterrupted() || isInterrupted)
 				{    
 					break;
 				}
-
-				OnRender();
-				SubSystem.RenderSystem.EndBuilderFrame();
-
-				prev = time;
+				Thread.yield();
 			}
-
-			if(isInterrupted() || isInterrupted)
-			{    
-				break;
-			}
-			Thread.yield();
+		}
+		catch (NullPointerException ex)
+		{
+			SubSystem.Log.WriteLine(ex.toString());
 		}
 		m_appFrame = null;
+		SubSystem.Log.WriteLine(this, "End update thread");
+		
 	}
-	
-	
+
 	private void OnUpdate()
 	{
 		SubSystem.Timer.Update();
 	 	final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
-		
+
 		SubSystem.FramePointer.Update(fElapsedTime);	
 
 		m_form.Update(SubSystem.FramePointer, fElapsedTime);
@@ -150,28 +177,24 @@ public class UpdateThread extends Thread
 			m_isDispError = !m_isDispError;
 		}
 
-		if(SubSystem.MinimumMarker.Done)
+		if (SubSystem.MinimumMarker.Done)
 		{
 			m_appFrame.OnUpdate();
 		}
 	}
-	
-	
-	
-	public void OnRender()
+
+	private void OnRender()
 	{
 		final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
+		final RenderContext rc = SubSystem.RenderSystem.GetRenderContext(0);
+		final GfxCommandContext gfxc = rc.GetCommandContext();
 
-		if(SubSystem.MinimumMarker.Done)
+		if (SubSystem.MinimumMarker.Done)
 		{
-			final RenderContext rc = SubSystem.RenderSystem.GetRenderContext(0);
 			m_appFrame.OnRender(rc);
 
-
-			final GfxCommandContext gfxc = rc.GetCommandContext();
 			final MatrixCache mc = rc.GetMatrixCache();
-
-			gfxc.SetViewport(0,0,m_surfaceWidth,m_surfaceHeight);
+			gfxc.SetViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
 
 			Float4x4 matrixOrtho = Float4x4.Local();
 			Matrix.orthoM(matrixOrtho.Values, 0, 0, m_surfaceWidth, m_surfaceHeight, 0, -1.0f, 1.0f);
@@ -180,7 +203,7 @@ public class UpdateThread extends Thread
 			mc.SetProjection(matrixOrtho);
 			mc.SetWorld(Float4x4.Identity(Float4x4.Local()));
 
-			final RasterizerState disableCullFace = new RasterizerState(false, ECullFace.Back,EFrontFace.CCW);
+			final RasterizerState disableCullFace = new RasterizerState(false, ECullFace.Back, EFrontFace.CCW);
 
 			gfxc.SetRasterizerState(disableCullFace);
 
@@ -191,14 +214,8 @@ public class UpdateThread extends Thread
 				final FontRender fr = rc.GetFontRender();
 				final BitmapFont bf = rc.GetBitmapFont();
 
-				//gfxc.SetClearColor(0.0f, 0.0f, 0.1f, 1.f); 
-				//gfxc.Clear(EClearBuffer.ColorDepthStencil);
-
-
-
-
 				fr.SetSize(16.0f);
-				if (m_isDispError )
+				if (m_isDispError)
 				{
 					fr.Begin();
 					Float3 f3Position = new Float3(
@@ -214,7 +231,6 @@ public class UpdateThread extends Thread
 						f3Position.Y += fr.m_fSize;
 					}
 					fr.End();
-
 				}
 
 				fr.Begin();
@@ -223,16 +239,16 @@ public class UpdateThread extends Thread
 				long totalMem = Runtime.getRuntime().totalMemory();
 				fr.Draw(0.0f, fr.m_fSize, 0.0f, String.format("Mem:%d/%d", (int) (totalMem - freeMem), (int) totalMem));
 				fr.Draw(0.0f, fr.m_fSize * 2.0f, 0.0f, String.format("ScanOut:%dx%d", 
-																	 (int) m_surfaceWidth, (int) m_surfaceHeight));
+																	 m_surfaceWidth, m_surfaceHeight));
 
 				/*
-				fr.Draw(0.0f, fr.m_fSize * 3, 0.0f, String.format("BackBuffer:%dx%d %dx%d", 
-																  (int) m_gameMain.m_frameBuffer.Width,
-																  (int) m_gameMain.m_frameBuffer.Height,
-																  (int) ((RenderTexture) m_gameMain.m_frameBuffer.ColorRenderTexture).PotWidth,
-																  (int) ((RenderTexture) m_gameMain.m_frameBuffer.ColorRenderTexture).PotHeight));
-				*/
-				fr.Draw(0.0f, fr.m_fSize *4.0f,0.0f,String.format("Core %d",java.lang.Runtime.getRuntime().availableProcessors()));											  
+				 fr.Draw(0.0f, fr.m_fSize * 3, 0.0f, String.format("BackBuffer:%dx%d %dx%d", 
+				 (int) m_gameMain.m_frameBuffer.Width,
+				 (int) m_gameMain.m_frameBuffer.Height,
+				 (int) ((RenderTexture) m_gameMain.m_frameBuffer.ColorRenderTexture).PotWidth,
+				 (int) ((RenderTexture) m_gameMain.m_frameBuffer.ColorRenderTexture).PotHeight));
+				 */
+				fr.Draw(0.0f, fr.m_fSize * 4.0f, 0.0f, String.format("Core %d", java.lang.Runtime.getRuntime().availableProcessors()));											  
 
 				long usemem = totalMem - freeMem;
 				if (m_memory <= 0)
@@ -247,22 +263,13 @@ public class UpdateThread extends Thread
 					}
 				}
 
-				//sfr.Draw( 0.0f, fr.m_fSize*2.0f, 0.0f, String.format( "%f %f %f", m_f3Euler.X, m_f3Euler.Y, m_f3Euler.Z ) );
 				fr.End();
 
-				if( m_form != null )
+				if (m_form != null)
 				{
-					m_form.Render(br,bf);
+					m_form.Render(br, bf);
 				}
-
 			}
-			else
-			{
-				//gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f);
-				//gfxc.Clear(EClearBuffer.ColorDepthStencil);
-			}
-
-
 
 			for (FramePointer.Pointer pointer : SubSystem.FramePointer.Pointers)
 			{
@@ -285,6 +292,11 @@ public class UpdateThread extends Thread
 
 				br.Arc(pointer.Position.X, pointer.Position.Y, 64.0f, 16);
 			}
+		}
+		else
+		{
+			gfxc.SetClearColor(0.0f, 0.4f, 0.1f, 1.f);
+			gfxc.Clear(EClearBuffer.ColorDepthStencil);
 		}
 	}
 }

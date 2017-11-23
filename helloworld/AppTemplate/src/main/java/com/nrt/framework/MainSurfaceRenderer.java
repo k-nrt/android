@@ -9,10 +9,7 @@ import com.nrt.render.*;
 
 public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 {
-	
 	public UpdateThread m_updateThread = null;
-
-	public Object m_locker = new Object();
 
 	public MainSurfaceRenderer( UpdateThread updateThread )
 	{
@@ -23,39 +20,24 @@ public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 	// 最初に呼ばれる
 	public void onSurfaceCreated(GL10 gl, EGLConfig config)
 	{
-		//SubSystem.Log.WriteLine(String.format("onSurfaceCreated() %d", m_nbOnSurfaceCreated));
+		SubSystem.Log.WriteLine(this,"onSurfaceCreated()");
 	}
 	
+	@Override	
 	public void onSurfaceChanged(GL10 gl, int width, int height) 
 	{
-		SubSystem.Log.WriteLine("\tonSurfaceChanged()" + width + "x" + height);
-		synchronized(m_locker)
-		{
-			m_updateThread.SetSurfaceSize(width,height);
-		}
+		SubSystem.Log.WriteLine(this,"onSurfaceChanged() " + width + "x" + height);
+		m_updateThread.SetSurfaceSize(width,height);
 	}
 
 	public void OnDestroy()
 	{
-		/*
-		m_updateThread.interrupt();
-
-		try
-		{
-			m_updateThread.join();
-		}
-		catch(java.lang.InterruptedException ex)
-		{
-
-		}
-		SubSystem.Log.WriteLine("\tOnDestroy()" );
 		m_updateThread = null;
-		*/
 	}
 	
+	@Override
 	public void onDrawFrame(GL10 gl)
 	{
-		//SubSystem.Timer.Update();
 		final float fElapsedTime = SubSystem.Timer.SafeFrameElapsedTime;
 		if( SubSystem.DelayResourceQueue != null )
 		{
@@ -63,7 +45,6 @@ public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 		}
 
 		final Render r = SubSystem.Render;
-
 
 		if(SubSystem.MinimumMarker.Done)
 		{
@@ -75,7 +56,6 @@ public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 				}
 				SubSystem.RenderSystem.ProcessCommands(r);
 			}
-
 		}
 		else
 		{
@@ -83,6 +63,4 @@ public class MainSurfaceRenderer implements GLSurfaceView.Renderer
 			r.Clear(EClearBuffer.ColorDepthStencil);
 		}
 	}
-
-	
 }

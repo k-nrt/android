@@ -33,20 +33,16 @@ import java.util.concurrent.atomic.*;
 public class MainActivity extends Activity
 {
 	private RenderSurfaceView m_renderView;
-
 	private android.os.Handler m_handler = new android.os.Handler();
-
-	private static GameMain m_gameMain = new GameMain();
 	
 	static int m_nbOnCreated = 0;
 	
 	// Called when the activity is first created.
-	@Override public void onCreate(Bundle savedInstanceState)
+	@Override 
+	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
-		android.util.Log.d("create","create");
 		
 		//. Initialize minimum subsystem instances.		
 		SubSystem.Initialize
@@ -54,27 +50,21 @@ public class MainActivity extends Activity
 			getResources().getAssets(), 
 			(TextView) findViewById(R.id.logview),
 			m_handler,
-			m_gameMain			
+			getApplicationContext(),
+			new AppFrameFactory()
+			{
+				@Override public AppFrame Create()
+				{
+					return new GameMain();
+				}
+			}	
 		);
 
 		//. Initialize render surface view.
 		m_renderView = (RenderSurfaceView)this.findViewById(R.id.glview);
-		m_renderView.Initialize();
+		m_renderView.Initialize();		
 		
-		if( m_nbOnCreated <= 0 )
-		{
-			//. Initialize minimum rendering resources.
-			SubSystem.OnCreate();
-			DelayResourceQueue drq = SubSystem.DelayResourceQueue;
-	
-			m_gameMain.OnCreate(drq);
-		}
-		else
-		{
-			SubSystem.DelayResourceQueue.ReloadResources();
-		}
-		
-		SubSystem.Log.WriteLine("MainActivity.onCreate() " + m_nbOnCreated);
+		SubSystem.Log.WriteLine(this,"onCreate() =" + m_nbOnCreated);
 		m_nbOnCreated++;
 	}
 
@@ -82,41 +72,36 @@ public class MainActivity extends Activity
 	{
 		super.onResume();
 		m_renderView.onResume();
-		SubSystem.Log.WriteLine("MainActivity.onResume()");
+		SubSystem.Log.WriteLine(this,"onResume()");
 	}
 
 	@Override public void onPause()
 	{
 		super.onPause();
 		m_renderView.onPause();
-		SubSystem.Log.WriteLine("MainActivity.onPause()");
+		SubSystem.Log.WriteLine(this,"onPause()");
 	}
 
 	@Override
 	protected void onStart()
 	{
-		// TODO: Implement this method
 		super.onStart();
-		SubSystem.Log.WriteLine("MainActivity.onStart()");
-
+		SubSystem.Log.WriteLine(this,"onStart()");
 	}
 
 	@Override
 	protected void onStop()
 	{
-		// TODO: Implement this method
 		super.onStop();
-		SubSystem.Log.WriteLine("MainActivity.onStart()");
-
+		SubSystem.Log.WriteLine(this,"onStop()");
 	}
 
 	@Override
 	protected void onDestroy()
 	{
-		// TODO: Implement this method
-		super.onDestroy();
-		m_renderView.onDestroy();
-		SubSystem.Log.WriteLine("MainActivity.onDestroy()");
+		super.onDestroy();		
+		SubSystem.Log.WriteLine(this,"onDestroy()");		
+		SubSystem.Exit();
 	}
 }
 
@@ -146,9 +131,9 @@ class RenderSurfaceView extends GLSurfaceView
 		this.setRenderer(m_surfaceRenderer);
 	}
 
+	@Override
 	public boolean onTouchEvent(MotionEvent me)
 	{
-		
 		DevicePointer.OnTouchEvent(me);
 		return true;
 	}
@@ -156,43 +141,33 @@ class RenderSurfaceView extends GLSurfaceView
 	@Override
 	public void onResume()
 	{
-		// TODO: Implement this method
-		//SubSystem.Log.Write( "onResume()" );
+		SubSystem.Log.WriteLine( this,"onResume()" );
 		super.onResume();
 	}
 
 	@Override
 	public void onPause()
 	{
-		// TODO: Implement this method
-		//SubSystem.Log.Write( "onPause()" );
+		SubSystem.Log.WriteLine( this,"onPause()" );
 		super.onPause();
 	}
 
 	@Override
 	protected void onDetachedFromWindow()
 	{
-		// TODO: Implement this method
 		super.onDetachedFromWindow();
 		
 		if( SubSystem.Log != null )
 		{
-			SubSystem.Log.WriteLine( "onDetachedFromWindow" );
+			SubSystem.Log.WriteLine( this, "onDetachedFromWindow" );
 		}
-	}
-
-	
-	
-	public void onDestroy()
-	{
-		m_surfaceRenderer.OnDestroy();
-		//super.onDestroy();
 	}
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 ///ビュー用のレンダラ―
+/*
 class SurfaceRenderer implements GLSurfaceView.Renderer
 {
 	private int SurfaceWidth = 0;
@@ -525,5 +500,5 @@ class SurfaceRenderer implements GLSurfaceView.Renderer
 		}
 	}
 }
-
+*/
 

@@ -25,5 +25,28 @@ public class JobScheduler
 	{
 		m_workerContext.GetMainQueue().offer( job );
 	}
+	
+	public void DestroyAllWorkers()
+	{
+		for(JobWorker worker : m_workers )
+		{
+			worker.interrupt();
+
+		}
+		
+		for( int i = 0 ; i < m_workers.length ; i++ )
+		{
+			try
+			{
+				m_workers[i].join();
+			}
+			catch(InterruptedException ex )
+			{
+				
+			}
+			m_workers[i] = null;
+		}
+		m_workers = null;
+	}	
 }
 

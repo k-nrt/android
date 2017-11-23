@@ -2,7 +2,6 @@ package com.nrt.basic;
 
 import java.util.*;
 
-
 public class DebugLog
 {
 	public static DebugLog Error = new DebugLog( 55 );
@@ -10,8 +9,8 @@ public class DebugLog
 	public String[] Buffers = null;
 	public int Position = 0;
 	public int RenderPosition = 0;
-
-	public DebugLog(int nBufferSize)
+	
+	public DebugLog(int nBufferSize )
 	{
 		Buffers = new String[nBufferSize + 1];
 		for (int i = 0 ; i < Buffers.length ; i++)
@@ -40,26 +39,7 @@ public class DebugLog
 			WriteLine(listLogs.get(i));
 		}
 	}
-
-	/*
-	public void Render(FontRender fr)
-	{
-		fr.Begin();
-		Float3 f3Position = new Float3(0.0f);
-		for (int i = 0 ; i < Buffers.length - 1 ; i++)
-		{
-			int rp = (RenderPosition < 0 ? 0 : RenderPosition);
-			int ii = (rp + i) % Buffers.length;
-
-			fr.Draw(f3Position, Buffers[ii]);
-			f3Position.Y += fr.m_font.m_nFontSize;
-		}
-		fr.End();
-	}	
-	*/
-
-//	boolean m_isScroll = false;
-
+	
 	public void NextLine()
 	{
 		Position++;
@@ -76,3 +56,4 @@ public class DebugLog
 		}
 	}
 }
+

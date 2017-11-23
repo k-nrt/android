@@ -23,17 +23,7 @@ public class FrameTimer
 	{
 		StartTime = java.lang.System.nanoTime();
 	}
-	/*
-	 public void Start()
-	 {
-
-	 }
-
-	 public void Stop()
-	 {
-
-	 }
-	 */
+	
 	public double GetCurrentTime()
 	{
 		return Math.abs((double) (java.lang.System.nanoTime() - StartTime)) * 0.000000001;

@@ -107,6 +107,7 @@ public class RenderSystem
 		m_nbCommandBuilderJobs = configuation.GfxCommandBuilderJobCount;
 		
 		drq.Add(m_marker);
+		SubSystem.Log.WriteLine("RenderSystem Initialized");
 	}
 
 	public void SetFont(final Font font)

@@ -2,7 +2,7 @@ package com.nrt.helloworld;
 
 import java.io.InputStream;
 
-  import com.nrt.basic.*;
+import com.nrt.basic.*;
 import com.nrt.math.FMath;
 import com.nrt.math.Float3;
 import com.nrt.math.Float4x4;
@@ -100,7 +100,7 @@ public class GameMain implements AppFrame
 	{
 		if( SubSystem.Log != null )
 		{
-			SubSystem.Log.WriteLine( "new GameMain()" );
+			SubSystem.Log.WriteLine(this, "new GameMain()" );
 		}
 	}
 
@@ -114,11 +114,12 @@ public class GameMain implements AppFrame
 
 	public void OnCreate( DelayResourceQueue drq ) //throws ThreadForceDestroyException
 	{
+		SubSystem.Log.WriteLine(this, "OnCreate():Begin" );
+		
 		m_fStartTime = SubSystem.Timer.FrameTime;
 		//RawImage rawImage = SubSystem.Loader.LoadPng("smokes.png");
 		//m_texture = new StaticTexture(rawImage);
 		
-		com.nrt.basic.DebugLog.Error.WriteLine( "OnCreate()" );
 
 		m_player = new GamePlayer();
 		m_viewPoint = new GameViewPoint();
@@ -249,8 +250,9 @@ public class GameMain implements AppFrame
 			m_explosionRender.Parameters.Noise = m_textureNoise;
 			drq.Add( Marker1 );
 		}});
+		SubSystem.Log.WriteLine(this, "OnCreate():End" );
 	}
-	
+	/*
 	public void OnLoadContent( DelayResourceQueue drq, int t ) //throws ThreadForceDestroyException
 	{
 		if( t == 0 )
@@ -311,9 +313,10 @@ public class GameMain implements AppFrame
 			m_explosionRender.Parameters.Noise = m_textureNoise;
 		}
 	}
-
+	*/
 	public void OnSurfaceChanged(int w, int h)
 	{
+		SubSystem.Log.WriteLine(this, "OnSurfaceChanged");
 		ScanOutWidth = w;
 		ScanOutHeight = h;
 		
