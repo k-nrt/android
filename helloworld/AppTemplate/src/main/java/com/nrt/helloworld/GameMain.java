@@ -252,68 +252,7 @@ public class GameMain implements AppFrame
 		}});
 		SubSystem.Log.WriteLine(this, "OnCreate():End" );
 	}
-	/*
-	public void OnLoadContent( DelayResourceQueue drq, int t ) //throws ThreadForceDestroyException
-	{
-		if( t == 0 )
-		{
-			//. starship model.
-			m_modelStarShip = LoadModel(drq, "starship1.ssgmodel");
-			m_collisionStarShip = LoadCollision("starship1.ssgcollision");
-			
-			//. enemy model.
-			m_modelEnemy0 = LoadModel(drq, "meka.ssgmodel");
-			m_modelEnemy1 = LoadModel(drq, "meka.ssgmodel");
-			m_modelEnemy2 = LoadModel(drq, "meka.ssgmodel");
-			m_modelEnemy3 = LoadModel(drq, "meka.ssgmodel");
 	
-			SetModelDiffuse(m_modelEnemy0, 1.0f, 0.8f, 0.1f);		
-			SetModelDiffuse(m_modelEnemy1, 0.5f, 1.0f, 0.6f);		
-			SetModelDiffuse(m_modelEnemy2, 1.0f, 0.2f, 0.7f);		
-			SetModelDiffuse(m_modelEnemy3, 0.2f, 0.1f, 1.0f);		
-		
-			//. enemy type.
-			m_enemyTypes = new GameEnemy.TypeDesc[]
-			{
-				new GameEnemy.TypeDesc(GameEnemy.EType.AWACS, "MS14", m_modelEnemy0),
-				new GameEnemy.TypeDesc(GameEnemy.EType.Assault, "MS06R", m_modelEnemy1),
-				new GameEnemy.TypeDesc(GameEnemy.EType.LightArmor, "MS06S", m_modelEnemy2),
-				new GameEnemy.TypeDesc(GameEnemy.EType.HeavyGunner, "MS09R", m_modelEnemy3),
-			};
-				
-			//. enemy pose.
-			m_rig = new AnimRig(m_modelEnemy0);
-			m_pose0 = new AnimPose(LoadModel(drq, "meka_fly.ssgmodel").Joints);
-			m_pose1 = new AnimPose(LoadModel(drq, "meka_standby.ssgmodel").Joints);
-
-			m_poseStack = new AnimPoseStack(4, m_rig);
-			m_poseStack.Push(m_pose0, 5.0f);			
-		}
-		else
-		{
-			//. starship beam field.
-			m_antiBeamField = new GameAntiBeamFieldRender(drq,16, 32);
-			m_antiBeamFieldDamages = new GameAntiBeamFieldDamageList();
-
-			//. light tail fx.
-			m_lightTailRender = new LightTailRender( drq, 16, 8);
-
-			//. back ground star field.
-			m_starField = new StarField(drq);
-
-			//. particles.
-			m_particle = new GameParticle(drq);		
-		
-			//, starship explosion.
-			m_explosionRender = new GameModelExplosionRender( drq );
-			PerlinNoise noise = new PerlinNoise( 64, 64, 64 );
-			m_textureNoise = new StaticTexture( drq,
-										   TextureInternalFormat.Luminance, noise.SurfaceWidth, noise.SurfaceHeight,
-										   TextureSourceFormat.Luminance, TextureSourceType.UnsignedByte, noise.Pixels, true );
-			m_explosionRender.Parameters.Noise = m_textureNoise;
-		}
-	}
-	*/
 	public void OnSurfaceChanged(int w, int h)
 	{
 		SubSystem.Log.WriteLine(this, "OnSurfaceChanged");
