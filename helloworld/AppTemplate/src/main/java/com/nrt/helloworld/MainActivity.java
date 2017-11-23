@@ -29,6 +29,7 @@ import com.nrt.math.Float3;
 import com.nrt.math.Float4x4;
 import java.util.logging.*;
 import java.util.concurrent.atomic.*;
+import android.content.*;
 
 public class MainActivity extends Activity
 {
@@ -68,6 +69,13 @@ public class MainActivity extends Activity
 		m_nbOnCreated++;
 	}
 
+	@Override
+	protected void onNewIntent(Intent intent)
+	{
+		super.onNewIntent(intent);
+		android.util.Log.d("log", "onNewIntent");
+	}	
+	
 	@Override public void onResume() 
 	{
 		super.onResume();
