@@ -70,7 +70,6 @@ public class SubSystem
 		JobScheduler.DestroyAllWorkers();
 		JobScheduler = null;
 
-		Timer = null;
 		FramePointer = null;
 		Render = null;
 		
