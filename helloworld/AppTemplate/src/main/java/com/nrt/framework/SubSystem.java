@@ -19,7 +19,8 @@ public class SubSystem
 {
 	//. アプリで唯一じゃないとじゃないとマズいもの.
 	public static FrameTimer Timer = new FrameTimer();
-	public static int Counter = 0;
+	public static int Initialized = 0;
+	public static int Exited = 0;
 	
 	public static DelayResourceQueue DelayResourceQueue = null;
 
@@ -35,7 +36,7 @@ public class SubSystem
 	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, Context context, AppFrameFactory appFrameFactory )
 	{
 		Log = new TextViewLog( handler, textView, Timer, context, "debug_log.txt" );
-		Log.WriteLine("Subsystem : Initialize "+Counter);
+		Log.WriteLine("Subsystem : Initialized "+ Initialized);
 		
 		Loader = new Loader( assetManager );
 		DelayResourceQueue = new DelayResourceQueue();
@@ -52,6 +53,8 @@ public class SubSystem
 		m_threadAppFrame.start();
 		
 		OnCreate();
+		
+		Initialized++;
 	}
 	
 	public static void Exit()
@@ -71,13 +74,13 @@ public class SubSystem
 		FramePointer = null;
 		Render = null;
 		
-		
 		Loader = null;
 		DelayResourceQueue = null;
 		
-		Log.WriteLine("Subsystem : Exit");
+		Log.WriteLine("Subsystem : Exited" + Exited);
 		Log.Close();
 		Log = null;
+		Exited++;
 	}
 	
 	public static Render Render = null;
