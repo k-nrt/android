@@ -132,6 +132,19 @@ public class DelayResourceQueue
 		*/
 	}
 	
+	public synchronized void Remove( RenderResource resource )
+	{
+		if(m_queueResources.contains(resource))
+		{
+			m_queueResources.remove(resource);
+		}
+		if(m_listResources.contains(resource))
+
+		{
+			m_listResources.remove(resource);
+		}
+	}
+	
 //	public synchronized void TestInterrupted() //throws ThreadForceDestroyException
 //	{
 //		/*
@@ -183,7 +196,7 @@ public class DelayResourceQueue
 		m_queueResources.clear();
 		m_queueResources.addAll( m_listResources );
 		
-		SubSystem.Log.WriteLine( String.format( "reload resources %d", m_listResources.size() ));
+		SubSystem.Log.WriteLine( this, String.format( "Reload resources %d", m_listResources.size() ));
 	}
 	
 	/*

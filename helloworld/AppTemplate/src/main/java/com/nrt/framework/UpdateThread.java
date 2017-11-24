@@ -42,7 +42,13 @@ public class UpdateThread extends Thread
 		m_appFrameFactory = appFrameFactory;
 	}
 
-	public void InterruptAndJoin()
+	public UpdateThread(ThreadGroup threadGroup, AppFrame appFrame)
+	{
+		super(threadGroup, String.format("update"));
+		m_appFrame = appFrame;
+	}
+	
+	public AppFrame InterruptAndJoin()
 	{
 		interrupt();
 
@@ -55,6 +61,7 @@ public class UpdateThread extends Thread
 
 		}
 		SubSystem.Log.WriteLine(this,"thread joined");
+		return m_appFrame;
 	}
 
 	public void SetSurfaceSize(int width, int height)
@@ -85,8 +92,18 @@ public class UpdateThread extends Thread
 			m_form = new UiForm();
 			m_form.Add(m_buttonDebug);
 
-			m_appFrame = m_appFrameFactory.Create();
-			m_appFrame.OnCreate(SubSystem.DelayResourceQueue);
+			if( m_appFrameFactory != null )
+			{
+				SubSystem.Log.WriteLine(this, "Create new AppFrame instance");
+				m_appFrame = m_appFrameFactory.Create();
+				m_appFrame.OnCreate(SubSystem.DelayResourceQueue);
+			}
+			else if( m_appFrame != null )
+			{
+				SubSystem.Log.WriteLine(this, "Recycle AppFrame instance");
+				
+				SubSystem.DelayResourceQueue.ReloadResources();
+			}
 
 			double interval = m_updateIntervalInSec;
 			double prev = SubSystem.Timer.GetCurrentTime() - interval;
@@ -126,7 +143,7 @@ public class UpdateThread extends Thread
 					}
 
 					OnUpdate();
-
+						
 					while (SubSystem.RenderSystem.BeginBuilderFrame() == false)
 					{                                                          
 						if (isInterrupted())
@@ -159,9 +176,7 @@ public class UpdateThread extends Thread
 		{
 			SubSystem.Log.WriteLine(ex.toString());
 		}
-		m_appFrame = null;
-		SubSystem.Log.WriteLine(this, "End update thread");
-		
+		SubSystem.Log.WriteLine(this, "End update thread");		
 	}
 
 	private void OnUpdate()

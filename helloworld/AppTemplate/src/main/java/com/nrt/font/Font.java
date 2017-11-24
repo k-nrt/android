@@ -596,5 +596,20 @@ public class Font
 		
 		jobScheduler.Add( textureMarker );
 	}
+	
+	public void RemoveResources(DelayResourceQueue drq)
+	{
+		drq.Remove(m_markerTextures);
+		
+		for( StaticTexture texture : m_textureFonts)
+		{
+			drq.Remove(texture);
+		}
+		
+		for( StaticTexture texture : m_textureBoarders)
+		{
+			drq.Remove(texture);
+		}	
+	}
 }
 

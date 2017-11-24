@@ -255,7 +255,7 @@ public class GameMain implements AppFrame
 	
 	public void OnSurfaceChanged(int w, int h)
 	{
-		SubSystem.Log.WriteLine(this, "OnSurfaceChanged");
+		SubSystem.Log.WriteLine(this, "OnSurfaceChanged():Begin");
 		ScanOutWidth = w;
 		ScanOutHeight = h;
 		
@@ -272,6 +272,7 @@ public class GameMain implements AppFrame
 		m_formDebug.Add((m_button0 = new UiRectButton(new Rect(w - 10 - 40, 10, 40, 40)))); 
 		m_formDebug.Add((m_button1 = new UiRectButton(new Rect(w - 10 - 40, 10 + 40 + 10, 40, 40))));
 		m_formDebug.Add((m_buttonPause = new UiRectButton(new Rect(w / 2 - 40, h - 50, 80, 40))));
+		SubSystem.Log.WriteLine(this, "OnSurfaceChanged():End");
 	}
 
 	public void OnUpdate()

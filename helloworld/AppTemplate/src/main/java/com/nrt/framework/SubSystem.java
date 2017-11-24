@@ -23,6 +23,7 @@ public class SubSystem
 	public static int Exited = 0;
 	
 	public static DelayResourceQueue DelayResourceQueue = null;
+	public static AppFrame m_appFrame = null;
 
 	//. アクティビティから貰ってくるもの.
 	public static Loader Loader = null;
@@ -32,56 +33,6 @@ public class SubSystem
 	public static UpdateThread m_threadAppFrame = null;
 
 	public static JobScheduler JobScheduler = null;
-
-	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, Context context, AppFrameFactory appFrameFactory )
-	{
-		Log = new TextViewLog( handler, textView, Timer, context, "debug_log.txt" );
-		Log.WriteLine("Subsystem : Initialized "+ Initialized);
-		
-		Loader = new Loader( assetManager );
-		DelayResourceQueue = new DelayResourceQueue();
-
-        Render = new Render();
-        FramePointer = new FramePointer();
-
-		JobScheduler = new JobScheduler(4);
-		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
-		
-		m_threadGroupAppFrame = new ThreadGroup("AppFrame");
-
-		m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame, appFrameFactory);
-		m_threadAppFrame.start();
-		
-		OnCreate();
-		
-		Initialized++;
-	}
-	
-	public static void Exit()
-	{
-		Log.Attach(null,null);
-		m_threadAppFrame.InterruptAndJoin();
-		m_threadAppFrame = null;
-		
-		m_threadGroupAppFrame = null;
-		
-		DelayResourceLoader = null;
-		
-		JobScheduler.DestroyAllWorkers();
-		JobScheduler = null;
-
-		FramePointer = null;
-		Render = null;
-		
-		Loader = null;
-		DelayResourceQueue = null;
-		
-		Log.WriteLine("Subsystem : Exited" + Exited);
-		Log.Close();
-		Log = null;
-		Exited++;
-	}
-	
 	public static Render Render = null;
 	public static RenderSystem RenderSystem = null;
 
@@ -92,44 +43,116 @@ public class SubSystem
 	public static Rand Rand = new Rand();
 
 	public static Debug Debug = null;
-	
+
 	public static DelayResourceLoader DelayResourceLoader = null;
 	public static DelayResourceQueueMarker MinimumMarker = new DelayResourceQueueMarker("MinimumSubSystem" );
 	public static DelayResourceQueueMarker SubSystemReadyMarker = new DelayResourceQueueMarker("SubSystemReady");
 	public static Font DebugFont = null;
-
-	private static void OnCreate()
-	{		
-		DelayResourceLoader.RegisterJob
-		(
-			"SubSystem RenderSystem", DelayResourceQueue,
-			new DelayResourceLoader.Job()
-			{
-				@Override public void OnLoadContent(DelayResourceQueue drq)
-				{
-					RenderSystem = new RenderSystem(drq,new RenderSystem.Configuration(), m_patterns);
-
-					DebugFont = new Font(SubSystem.JobScheduler, drq, 1024, 16, 1, 1);
-					SubSystem.RenderSystem.SetFont( DebugFont );
-
-					DelayResourceQueue.Add( MinimumMarker );
-				}
-			}
-		);
+	
+	public static void Initialize( AssetManager assetManager, TextView textView, Handler handler, Context context, AppFrameFactory appFrameFactory )
+	{
+		Log = new TextViewLog( handler, textView, Timer, context, "debug_log.txt" );
+		Log.WriteLine("Subsystem : Initialized "+ Initialized);
 		
-		DelayResourceLoader.RegisterJob
-		( 
-			"SubSystem Model", DelayResourceQueue,
-			new DelayResourceLoader.Job()
-			{
-				@Override public void OnLoadContent(DelayResourceQueue drq)
+		Loader = new Loader( assetManager );
+		
+		JobScheduler = new JobScheduler(4);
+		DelayResourceLoader = new DelayResourceLoader( JobScheduler, Log );
+
+		m_threadGroupAppFrame = new ThreadGroup("AppFrame");
+		
+		
+		if(Initialized <= 0)
+		{
+			DelayResourceQueue = new DelayResourceQueue();
+        	Render = new Render();
+   		    FramePointer = new FramePointer();
+			
+			DelayResourceLoader.RegisterJob
+			(
+				"SubSystem RenderSystem", DelayResourceQueue,
+				new DelayResourceLoader.Job()
 				{
-					Debug = new Debug( drq );
-					ModelRender = new ModelRender( drq, Loader);
-					drq.Add( SubSystemReadyMarker );
+					@Override public void OnLoadContent(DelayResourceQueue drq)
+					{
+						RenderSystem = new RenderSystem(drq,new RenderSystem.Configuration(), m_patterns);
+
+						DebugFont = new Font(SubSystem.JobScheduler, drq, 1024, 16, 1, 1);
+						SubSystem.RenderSystem.SetFont( DebugFont );
+
+						DelayResourceQueue.Add( MinimumMarker );
+
+						SubSystem.Log.WriteLine("Done RenderSystem");
+					}
 				}
-			}
-		);
+			);
+
+			DelayResourceLoader.RegisterJob
+			( 
+				"SubSystem Model", DelayResourceQueue,
+				new DelayResourceLoader.Job()
+				{
+					@Override public void OnLoadContent(DelayResourceQueue drq)
+					{
+						Debug = new Debug( drq );
+						ModelRender = new ModelRender( drq, Loader);
+						drq.Add( SubSystemReadyMarker );
+						SubSystem.Log.WriteLine("Done ModelRender");
+					}
+				}
+			);
+		}
+		else
+		{
+			DebugFont = new Font(SubSystem.JobScheduler, DelayResourceQueue, 1024, 16, 1, 1);
+			SubSystem.RenderSystem.SetFont( DebugFont );
+			DelayResourceQueue.ReloadResources();
+		}
+		
+		if( m_appFrame == null )
+		{
+			m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame, appFrameFactory);
+		}
+		else
+		{
+			m_threadAppFrame = new UpdateThread(m_threadGroupAppFrame, m_appFrame );
+			m_appFrame = null;
+		}
+		m_threadAppFrame.start();
+			
+		Initialized++;
+	}
+	
+	public static void Exit()
+	{
+		if(DebugFont.IsReady()==false)
+		{
+			DebugFont.RemoveResources(DelayResourceQueue);
+		}
+		//MinimumMarker.Reset();
+		//SubSystemReadyMarker.Reset();
+		
+		Log.Attach(null,null);
+		m_appFrame = m_threadAppFrame.InterruptAndJoin();
+		//m_threadAppFrame.InterruptAndJoin();
+		m_threadAppFrame = null;
+		m_threadGroupAppFrame = null;
+		
+		//DelayResourceLoader = null;
+		
+		JobScheduler.DestroyAllWorkers();
+		JobScheduler = null;
+
+		//FramePointer = null;
+		//Render = null;
+		
+		Loader = null;
+		//DelayResourceQueue = null;
+		
+		Log.WriteLine("Subsystem : Exited " + Exited);
+		Log.Close();
+		Log = null;
+		Exited++;
 	}
 	
 	private static final BitmapFont.Pattern[] m_patterns =
