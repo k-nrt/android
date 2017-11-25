@@ -12,26 +12,24 @@ public class Uniform extends RenderResource
 	public String Name = null;
 
 	public int Index = -1;
-	
-	public void Initialize( DelayResourceQueue queue, Program program, String strName )
-		//throws ThreadForceDestroyException
+
+	public Uniform(DelayResourceQueue drq, Program program, String name)
 	{
 		Program = program;
-		Name = strName;
+		Name = name;
 		Index = -1;
-		
-		if( queue == null )
+
+		if (drq != null)
 		{
-			Apply();
+			drq.Add(this);
 		}
 		else
 		{
-			queue.Add( this );
+			Generate();
 		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		if (Program.Name == 0)
 		{
@@ -39,65 +37,18 @@ public class Uniform extends RenderResource
 		}
 
 		Index = GLES20.glGetUniformLocation(Program.Name, Name);
-		if( Index < 0 )
+		if (Index < 0)
 		{
-			DebugLog.Error.WriteLine( String.format( "uniform not found %d %s", Index, Name ));
+			DebugLog.Error.WriteLine(String.format("uniform not found %d %s", Index, Name));
 		}
 		else
 		{
-			DebugLog.Error.WriteLine( String.format( "apply uniform %d %s", Index, Name ));
+			DebugLog.Error.WriteLine(String.format("apply uniform %d %s", Index, Name));
 		}
 	}
-	
-	public Uniform()
-	{}
 
-	/*
-	public Uniform(Program program, String name)
-	throws ThreadForceDestroyException
+	@Override public void Delete()
 	{
-		Initialize( null, program, name );
-		//Create( this, program, name );
-		//Name = name;
-		//BindLocation( program );
+		Index = -1;
 	}
-	*/
-	public Uniform( DelayResourceQueue queue, Program program, String name)
-		//throws ThreadForceDestroyException
-	{
-		Initialize( queue, program, name );
-		//Create( this, program, name );
-		//Name = name;
-		//BindLocation( program );
-	}
-	
-	
-	/*
-	public Uniform( String name )
-	{
-		Name = name;
-	}
-	*/
-	
-	/*
-	public void BindLocation( Program program )
-	{
-		if (program.Name == 0)
-		{
-			return;
-		}
-
-		Index = GLES20.glGetUniformLocation(program.Name, Name);
-		if( Index < 0 )
-		{
-			DebugLog.Error.WriteLine( String.format( "uniform not found %d %s", Index, Name ));
-		}
-	}
-	
-	public static void Create(Uniform uniform, Program program, String name)
-	{
-		uniform.Name = name;
-		uniform.BindLocation( program );
-	}
-	*/
 }

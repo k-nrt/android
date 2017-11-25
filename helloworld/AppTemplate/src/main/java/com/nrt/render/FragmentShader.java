@@ -3,21 +3,9 @@ package com.nrt.render;
 
 public class FragmentShader extends Shader
 {
-	public FragmentShader()
-	{}
-	
-	public FragmentShader( DelayResourceQueue queue, String[] arrayLines)
-	//throws ThreadForceDestroyException
+	public FragmentShader( DelayResourceQueue drq, String[] arrayLines)
 	{
-		super( queue, Shader.EType.Fragment, arrayLines );
-		//super(Shader.EType.Fragment, arraySource);
+		super( drq, Shader.EType.Fragment, arrayLines );
 	}
-	
-	/*	
-	public static void Create( FragmentShader fragmentShader, String strSource )
-	{
-		Shader.Create( fragmentShader, Shader.EType.Fragment, strSource );
-	}
-	*/
 }
 

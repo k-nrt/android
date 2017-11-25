@@ -9,7 +9,6 @@ public class RingIndexBuffer extends RingBuffer implements IndexBuffer
 	}
 	
 	public RingIndexBuffer( DelayResourceQueue drq, int size)
-		//throws ThreadForceDestroyException
 	{
 		super( drq, EBufferType.Index, size);
 	}

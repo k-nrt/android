@@ -2,7 +2,6 @@ package com.nrt.render;
 
 import android.opengl.*;
 
-//import com.nrt.r
 
 public class SamplerState
 {

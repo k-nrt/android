@@ -25,27 +25,22 @@ public class Shader extends RenderResource
 	EType Type = EType.Unknown;
 	String Source = null;
 	
-	public Shader()
-	{}
-	
-	public void Initialize( DelayResourceQueue queue, EType type, String strSource ) // throws ThreadForceDestroyException
+	public Shader( DelayResourceQueue drq, EType eType, String[] arrayLines )
 	{
-		Type = type;
-		Source = strSource;
+		Type = eType;
+		Source = CombineSourceLines( arrayLines );
 		
-		if( queue == null )
+		if( drq != null )
 		{
-			//Apply();
-			SubSystem.Log.WriteLine(strSource);
+			drq.Add( this );
 		}
 		else
 		{
-			queue.Add( this );
+			Generate();
 		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		//SubSystem.Log.WriteLine( "apply shader" );
 		Name = GLES20.glCreateShader(Type.Value);
@@ -80,14 +75,17 @@ public class Shader extends RenderResource
 			return;
 		}
 	}
-	
-	public Shader( DelayResourceQueue queue, EType eType, String[] arrayLines ) // throws ThreadForceDestroyException
+
+	@Override public void Delete()
 	{
-		//Create( this, eType, ConbineSourceLines( arrayLines ) );
-		Initialize( queue, eType, ConbineSourceLines( arrayLines ) );
+		if( 0 < Name )
+		{
+			GLES20.glDeleteShader(Name);
+		}
+		Name = 0;
 	}
-	
-	public static String ConbineSourceLines( String[] arrayLines )
+
+	public static String CombineSourceLines( String[] arrayLines )
 	{
 		String strSrc = new String();
 		for (int i = 0 ; i < arrayLines.length ; i++)
@@ -97,53 +95,4 @@ public class Shader extends RenderResource
 		}
 		return strSrc;
 	}
-	
-//	public static void Create( Shader shader, EType eType, String strSource )
-//	{
-//		/*
-//		String strSrc = new String();
-//		for (int i = 0 ; i < arraySrc.length ; i++)
-//		{
-//			strSrc += arraySrc[i];
-//			strSrc += "\n";
-//		}
-//		*/
-//		/*
-//		int type = GLES20.GL_VERTEX_SHADER;
-//		if (eType == EType.Fragment)
-//		{
-//			type = GLES20.GL_FRAGMENT_SHADER;
-//		}
-//		*/
-//		shader.Name = GLES20.glCreateShader(eType.Value);
-//		if (shader.Name == 0)
-//		{
-//			// シェーダーの領域確保に失敗した
-//			Log.d("compileShader", "領域確保に失敗"); 
-//			return; 
-//		}
-//		// シェーダーをコンパイル 
-//
-//		GLES20.glShaderSource(shader.Name, strSource);
-//		GLES20.glCompileShader(shader.Name);
-//
-//		// コンパイルが成功したか調べる
-//		int[] res = new int[1];
-//		GLES20.glGetShaderiv(shader.Name, GLES20.GL_COMPILE_STATUS, res, 0);
-//		if (res[0] == 0)
-//		{
-//			// 失敗してる
-//			//	Log.d("compileShader", GLES20.glGetShaderInfoLog(Name));
-//			Error.add( eType.name() );
-//			String[] logs = GLES20.glGetShaderInfoLog( shader.Name ).split( "\n" );
-//
-//			for( String log : logs )
-//			{
-//				Error.add( log );
-//			}
-//
-//			shader.Name = 0;
-//			return;
-//		}
-//	}
 }

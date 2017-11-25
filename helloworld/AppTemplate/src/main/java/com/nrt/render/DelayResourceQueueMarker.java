@@ -15,11 +15,9 @@ public class DelayResourceQueueMarker extends RenderResource
 		Done = false;
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		Done = true;
-		
 		SubSystem.Log.WriteLine( Name + " marker is done." );
 	}
 }

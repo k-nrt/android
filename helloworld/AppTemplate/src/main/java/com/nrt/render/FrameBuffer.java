@@ -21,7 +21,6 @@ public class FrameBuffer extends RenderResource
 		RenderBuffer depth, 
 		RenderBuffer stencil
 	)
-		//throws ThreadForceDestroyException
 	{
 		Name = 0;
 		
@@ -60,7 +59,6 @@ public class FrameBuffer extends RenderResource
 		RenderBuffer depth, 
 		RenderBuffer stencil
 	)
-		//throws ThreadForceDestroyException
 	{
 		Name = 0;
 
@@ -92,8 +90,7 @@ public class FrameBuffer extends RenderResource
 		drq.Add(this);
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		DeleteFrameBuffer( Name, ColorRenderTexture, ColorRenderBuffer, DepthRenderBuffer, StencilRenderBuffer );
 		
@@ -106,7 +103,16 @@ public class FrameBuffer extends RenderResource
 		);
 		
 		SubSystem.Log.WriteLine( String.format( "FrameBuffer.Apply() %d %dx%d", Name, Width, Height ) );
-	}	
+	}
+
+	@Override public void Delete()
+	{
+		if( 0 < Name )
+		{
+			DeleteFrameBuffer( Name, ColorRenderTexture, ColorRenderBuffer, DepthRenderBuffer, StencilRenderBuffer );
+		}
+		Name = 0;
+	}
 	
 	public void OnSurfaceChanged( int width, int height )
 	{

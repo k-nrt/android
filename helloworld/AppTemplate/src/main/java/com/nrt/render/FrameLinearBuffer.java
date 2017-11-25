@@ -22,19 +22,30 @@ public class FrameLinearBuffer extends RenderResource
 		m_buffer = ByteBuffer.allocateDirect(Size);
 		m_buffer.order(ByteOrder.nativeOrder());
 
-		drq.Add(this);
+		if(drq != null)
+		{
+			drq.Add(this);
+		}
+		else
+		{
+			Generate();
+		}
 	}
 
 	@Override
-	public void Apply()
+	public void Generate()
 	{
-		int[] names = { 0 };
-		GLES20.glGenBuffers(1, names, 0);
-		Name = names[0];
+		Name = CreateBuffer(BufferType, m_buffer,  EBufferUsage.StreamDraw );
+	}
 
-		GLES20.glBindBuffer(BufferType.Value, Name);
-		GLES20.glBufferData(BufferType.Value, m_buffer.capacity(), m_buffer, GLES20.GL_STREAM_DRAW);
-		GLES20.glBindBuffer(BufferType.Value, 0);
+	@Override
+	public void Delete()
+	{
+		if( 0 < Name )
+		{
+			DeleteBuffer(Name);
+		}
+		Name = 0;
 	}
 
 	public void Rewind()

@@ -23,20 +23,37 @@ public class RingBuffer extends RenderResource
 		
 		m_buffer = ByteBuffer.allocateDirect(Size);
 		m_buffer.order(ByteOrder.nativeOrder());
-		
-		drq.Add( this );
+
+		if( drq != null )
+		{
+			drq.Add(this);
+		}
+		else
+		{
+			Generate();
+		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		int[] names = { 0 };
 		GLES20.glGenBuffers(1, names, 0);
 		Name = names[0];
 
 		GLES20.glBindBuffer(BufferType.Value, Name);
+		m_buffer.position(0);
 		GLES20.glBufferData(BufferType.Value, m_buffer.capacity(), m_buffer, GLES20.GL_DYNAMIC_DRAW);
 		GLES20.glBindBuffer(BufferType.Value, 0 );
+	}
+
+	@Override public void Delete()
+	{
+		if( 0 < Name )
+		{
+			int[] names = { Name };
+			GLES20.glDeleteBuffers(1, names,0);
+		}
+		Name = 0;
 	}
 
 	public void Begin()

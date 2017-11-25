@@ -9,15 +9,13 @@ public class StaticIndexBuffer extends com.nrt.render.Buffer implements IndexBuf
 	}
 
 	public StaticIndexBuffer( DelayResourceQueue drq, short[] data )
-	//throws ThreadForceDestroyException
 	{
-		super( drq, EBufferType.Index, data, BufferUsage.StaticDraw);
+		super( drq, EBufferType.Index, data, EBufferUsage.StaticDraw);
 	}
 
 	public StaticIndexBuffer( DelayResourceQueue drq, java.nio.Buffer data )
-	//throws ThreadForceDestroyException
 	{
-		super( drq, EBufferType.Index, data, BufferUsage.StaticDraw);
+		super( drq, EBufferType.Index, data, EBufferUsage.StaticDraw);
 	}
 }
 

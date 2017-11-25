@@ -10,23 +10,37 @@ public class RenderBuffer extends RenderResource
 	public int Height = 0;
 	
 	public RenderBuffer(DelayResourceQueue drq, ERenderBufferFormat eFormat, int width, int height )
-		//throws ThreadForceDestroyException
 	{
 		m_renderBufferFormat = eFormat;
 		Name = 0;//CreateRenderBuffer( eFormat, width, height );		
 		Width = width;
 		Height = height;
-		
-		drq.Add( this );
+
+		if( drq != null )
+		{
+			drq.Add(this);
+		}
+		else
+		{
+			Generate();
+		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		DeleteRenderBuffer(Name);
 		Name = CreateRenderBuffer( m_renderBufferFormat, Width, Height );
 		SubSystem.Log.WriteLine( String.format( "RenderBuffer.Apply() %d %s %dx%d", Name, m_renderBufferFormat.toString(),  Width, Height ) );
-	}	
+	}
+
+	@Override public void Delete()
+	{
+		if( 0 < Name )
+		{
+			DeleteRenderBuffer(Name);
+		}
+		Name = 0;
+	}
 	
 	
 	

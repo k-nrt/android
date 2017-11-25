@@ -7,33 +7,25 @@ public class Program extends RenderResource
 	public VertexShader VertexShader = null;
 	public FragmentShader FragmentShader = null;
 	public AttributeBinding[] AttributeBindings = null;
-	
-	public void Initialize
-	(
-		DelayResourceQueue queue,
-		AttributeBinding[] attributeBindings, 
-		VertexShader vs,
-		FragmentShader fs
-	)
-		//throws ThreadForceDestroyException
+
+	public Program( DelayResourceQueue drq, AttributeBinding[] attributeBindings, VertexShader vs, FragmentShader fs)
 	{
 		VertexShader = vs;
 		FragmentShader = fs;
-		
+
 		AttributeBindings = attributeBindings;
-		
-		if( queue == null )
+
+		if( drq != null )
 		{
-			Apply();
+			drq.Add( this );
 		}
 		else
 		{
-			queue.Add( this );
+			Generate();
 		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{		
 		if (VertexShader.Name == 0 || FragmentShader.Name == 0)
 		{
@@ -55,50 +47,14 @@ public class Program extends RenderResource
 
 		GLES20.glLinkProgram(Name);
 	}
-	
-	public Program()
-	{}
 
-	public Program( DelayResourceQueue queue, AttributeBinding[] attributeBindings, VertexShader vs, FragmentShader fs)
-		//throws ThreadForceDestroyException
+	@Override public void Delete()
 	{
-		Initialize( queue, attributeBindings, vs, fs );
-		//Create( this, attributeBindings, vs, fs );
-	}
-	
-	/*
-	
-	public static void Create(Program program, AttributeBinding[] attributeBindings,
-		String[] arrayVsSource, String[] arrayFsSource )
-	{
-		Create( program, attributeBindings,
-			new VertexShader( arrayVsSource ), new FragmentShader( arrayFsSource ) );
-	}
-	
-	public static void Create(Program program, AttributeBinding[] attributeBindings, VertexShader vs, FragmentShader fs)
-	{
-		if (vs.Name == 0 || fs.Name == 0)
+		if( 0 < Name )
 		{
-			return;
+			GLES20.glDeleteProgram(Name);
 		}
-		program.Name = GLES20.glCreateProgram();
-		GLES20.glAttachShader(program.Name, vs.Name); 
-		GLES20.glAttachShader(program.Name, fs.Name);
-
-		for (int i = 0 ; i < attributeBindings.length ; i++)
-		{
-			GLES20.glBindAttribLocation(program.Name,
-										attributeBindings[i].Index,
-										attributeBindings[i].Name);
-		}
-
-		GLES20.glLinkProgram(program.Name);
-		
-		program.VertexShader = vs;
-		program.FragmentShader = fs;
-		program.AttributeBindings = attributeBindings;
+		Name = 0;
 	}
-	*/
-	
 }
 

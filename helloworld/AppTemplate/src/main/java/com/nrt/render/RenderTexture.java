@@ -12,7 +12,6 @@ public class RenderTexture extends RenderResource implements Texture
 	public int NpotHeight = 0;
 	
 	public RenderTexture( DelayResourceQueue drq, RenderTextureFormat eFormat, int width, int height )
-		//throws ThreadForceDestroyException
 	{
 		Format = eFormat;
 		NpotWidth = width;
@@ -20,16 +19,27 @@ public class RenderTexture extends RenderResource implements Texture
 		PotWidth =StaticTexture.GetPowerOfTwo( width );
 		PotHeight = StaticTexture.GetPowerOfTwo( height );
 		Name = 0;//CreateTexture( eFormat, PotWidth, PotHeight );
-		
-		drq.Add(this);
+
+		if( drq != null )
+		{
+			drq.Add(this);
+		}
+		else
+		{
+			Generate();
+		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
 		DeleteTexture( Name );
 		Name = CreateTexture( Format, PotWidth, PotHeight );
 		SubSystem.Log.WriteLine( String.format( "RenderTexture.Apply() %d %s %dx%d", Name, Format.toString(), PotWidth, PotHeight ) );
+	}
+
+	@Override public void Delete()
+	{
+		DeleteTexture( Name );
 	}
 	
 	@Override

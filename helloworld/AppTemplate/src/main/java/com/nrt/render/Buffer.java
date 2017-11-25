@@ -1,5 +1,6 @@
 package com.nrt.render;
 import android.opengl.*;
+import android.widget.TextView;
 
 //import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -7,77 +8,56 @@ import java.nio.ByteOrder;
 
 public class Buffer extends RenderResource
 {
-	public int Type = 0;
+	public EBufferType Type = EBufferType.Unknown;
 	public java.nio.Buffer Buffer = null;
-	public int Usage = 0;
-	
-	public void Initialize( DelayResourceQueue drq, 
-		int eType, 
-		java.nio.Buffer buffer,
-		int eUsage )
-		//throws ThreadForceDestroyException
+	public EBufferUsage Usage = EBufferUsage.StaticDraw;
+
+	public Buffer(DelayResourceQueue drq, EBufferType bufferType, java.nio. Buffer buffer, EBufferUsage bufferUsage )
 	{
-		Type = eType;
+		Type = bufferType;
 		Buffer = buffer;
-		Usage = eUsage;
-		
+		Usage = bufferUsage;
+
 		if( drq != null )
 		{
 			drq.Add( this );
 		}
 		else
 		{
-			Apply();
+			Generate();
 		}
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{
-		int[] names = { 0 };
-		GLES20.glGenBuffers(1, names, 0);
-		Name = names[0];
-		GLES20.glBindBuffer(Type, Name);
-		GLES20.glBufferData(Type, Buffer.capacity(), Buffer, Usage);
-		GLES20.glBindBuffer(Type, 0 );
+		Name = CreateBuffer( Type, Buffer, Usage );
 	}
 
-	public Buffer(DelayResourceQueue drq, EBufferType eType, java.nio. Buffer buffer, BufferUsage eUsage )
-	//throws ThreadForceDestroyException
+	@Override public void Delete()
 	{
-		Initialize( drq, eType.Value, buffer, eUsage.Value );
-		/*
-		int[] names = { 0 };
-		GLES20.glGenBuffers(1, names, 0);
-		Name = names[0];
-		GLES20.glBindBuffer(eType.Value, Name);
-		GLES20.glBufferData(eType.Value, buffer.capacity(), buffer, eUsage.Value);
-		GLES20.glBindBuffer(eType.Value, 0 );
-		*/
+		if( 0 < Name )
+		{
+			DeleteBuffer(Name);
+ 		}
+		Name = 0;
 	}
-	
-	
-	public Buffer(DelayResourceQueue drq, EBufferType eType, byte[] data, BufferUsage eUsage )
-	//throws ThreadForceDestroyException
+
+	public Buffer(DelayResourceQueue drq, EBufferType eType, byte[] data, EBufferUsage eUsage )
 	{
 		this( drq, eType, CreateByteBuffer(data), eUsage );
 	}
 
-	public Buffer(DelayResourceQueue drq, EBufferType eType, short[] data, BufferUsage eUsage )
-	//throws ThreadForceDestroyException
-	
+	public Buffer(DelayResourceQueue drq, EBufferType eType, short[] data, EBufferUsage eUsage )
 	{
 		this( drq, eType, CreateByteBuffer(data), eUsage );
 	}
 	
-	public Buffer(DelayResourceQueue drq, EBufferType eType, int[] data, BufferUsage eUsage )
-	//throws ThreadForceDestroyException
+	public Buffer(DelayResourceQueue drq, EBufferType eType, int[] data, EBufferUsage eUsage )
 	{
 		this( drq, eType, CreateByteBuffer(data), eUsage );
 	}
 	
-	public Buffer(DelayResourceQueue drq, EBufferType eType, float[] data, BufferUsage eUsage )
-	//throws ThreadForceDestroyException
+	public Buffer(DelayResourceQueue drq, EBufferType eType, float[] data, EBufferUsage eUsage )
 	{
 		this( drq, eType, CreateByteBuffer(data), eUsage );
 	}

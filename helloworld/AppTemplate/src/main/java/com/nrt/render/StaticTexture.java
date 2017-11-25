@@ -169,8 +169,7 @@ public class StaticTexture extends RenderResource implements Texture
 		return result;
 	}
 
-	@Override
-	public void Apply()
+	@Override public void Generate()
 	{		
 		int[] names = { 0 };
 		GLES20.glGenTextures(1, names, 0);
@@ -207,5 +206,15 @@ public class StaticTexture extends RenderResource implements Texture
 		GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
 
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+	}
+
+	@Override public void Delete()
+	{
+		if( 0 < Name )
+		{
+			int[] names = {Name};
+			GLES20.glDeleteTextures(1, names, 0);
+		}
+		Name = 0;
 	}
 }

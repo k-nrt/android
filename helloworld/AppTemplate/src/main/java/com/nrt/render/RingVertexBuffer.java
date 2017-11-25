@@ -9,7 +9,6 @@ public class RingVertexBuffer extends RingBuffer implements VertexBuffer
 	}
 
 	public RingVertexBuffer( DelayResourceQueue drq, int size)
-		//throws ThreadForceDestroyException
 	{
 		super( drq, EBufferType.Vertex, size);
 	}
