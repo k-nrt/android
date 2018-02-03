@@ -189,6 +189,7 @@ public class Font
 							{
 								FontRenderer fontRenderer = new FontRenderer
 								(
+									m_jobScheduler,
 									m_width,m_height,
 									m_fontSize,m_rectSize,m_gapSize,m_borderSize,
 									m_infos, startChar, i+1,
@@ -248,8 +249,10 @@ public class Font
 
 			if( textureRenderer != null )
 			{
+				//. Create last font rasterizer Job.
 				FontRenderer fontRenderer = new FontRenderer
 				(
+					m_jobScheduler,
 					m_width,m_height,
 					m_fontSize,m_rectSize,m_gapSize,m_borderSize,
 					m_infos, startChar, m_infos.length,
@@ -258,11 +261,13 @@ public class Font
 				m_jobScheduler.Add(fontRenderer);
 				int channel = nbChannels%4;
 				fontRenderers[channel] = fontRenderer;
-				
+
+				//. Create dummy counter jobs.
 				for(int i = channel + 1; i < 4 ; i++ )
 				{
 					fontRenderer = new FontRenderer
 					(
+						m_jobScheduler,
 						m_width,m_height,
 						m_fontSize,m_rectSize,m_gapSize,m_borderSize,
 						m_infos, 0, 0,
@@ -285,6 +290,7 @@ public class Font
 
 	public static class FontRenderer implements Job
 	{
+		public JobScheduler m_jobScheduler;
 		public Bitmap m_bitmap;
 		public Canvas m_canvas;
 		
@@ -300,15 +306,17 @@ public class Font
 		public int m_borderSize;
 		
 		public AtomicInteger m_channelCounter;
-		
+		public AtomicInteger m_yPositionCounter;
 		public FontRenderer
 		(
+			JobScheduler jobScheduler,
 			int width, int height, 
 			int fontSize, int rectSize, int gapSize, int borderSize,
 			FontCharInfo[] infos, int start, int end,
 			AtomicInteger channelCounter
 		)
 		{
+			m_jobScheduler = jobScheduler;
 			m_bitmap = Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
 			m_bitmap.setHasAlpha(false);
 			m_fontSize = fontSize;
@@ -319,17 +327,18 @@ public class Font
 			m_start = start;
 			m_end = end;
 			m_channelCounter = channelCounter;
+			m_yPositionCounter = new AtomicInteger(0);
 		}
 
 		public JobStatus Run()
 		{
 			DrawFonts();
 			CreatePixels();
-			int counter = m_channelCounter.getAndIncrement();
-			SubSystem.Log.WriteLine("FontRenderer Done "+counter);
+			//int counter = m_channelCounter.getAndIncrement();
+			//SubSystem.Log.WriteLine("FontRenderer Done "+counter);
 			return JobStatus.Done;
 		}
-		
+
 		public void DrawFonts()
 		{
 			if( m_end <= m_start )
@@ -367,7 +376,8 @@ public class Font
 				canvas.drawText( cc, 0, 1, nX + cx, nY + bottom, paint);
 			}			
 		}
-		
+
+
 		public void CreatePixels()
 		{
 			int width = m_bitmap.getWidth();
@@ -383,31 +393,91 @@ public class Font
 			
 			for( int y = 0 ; y < height ; y++ )
 			{
-				for( int x = 0 ; x < width ; x++ )
-				{					
+				BorderRasterizer borderRasterizer = new BorderRasterizer
+				(
+					y, width,height, m_borderSize,
+					m_fontPixels, m_borderPixels,
+					m_yPositionCounter, m_channelCounter
+				);
+
+				m_jobScheduler.Add( borderRasterizer );
+				//borderRasterizer.Run();
+			}
+		}
+
+		public static class BorderRasterizer implements Job
+		{
+			private int m_yTarget = 0;
+			private int m_width = 0;
+			private int m_height = 0;
+			private int m_borderSize = 0;
+			private int[] m_fontPixels = null;
+			private int[] m_borderPixels = null;
+			private AtomicInteger m_yPositionCounter = null;
+			private AtomicInteger m_channelCounter = null;
+
+			public BorderRasterizer
+			(
+				int yTarget, int width, int  height, int borderSize,
+				int[] fontPixels, int[] borderPixels,
+				AtomicInteger yPositionCounter,
+				AtomicInteger channelCounter
+			)
+			{
+				m_yTarget = yTarget;
+				m_width = width;
+				m_height = height;
+				m_borderSize = borderSize;
+				m_fontPixels = fontPixels;
+				m_borderPixels = borderPixels;
+				m_yPositionCounter = yPositionCounter;
+				m_channelCounter = channelCounter;
+			}
+
+			public JobStatus Run()
+			{
+				CreateBorderPixels();
+				int counter = m_yPositionCounter.getAndIncrement();
+				SubSystem.Log.WriteLine( String.format("BorderRasterizer %d Done ",m_yTarget));
+
+				if( (m_height-1) <= counter )
+				{
+					int channelCounter = m_channelCounter.getAndIncrement();
+					SubSystem.Log.WriteLine("FontRenderer Done "+channelCounter);
+				}
+
+				return JobStatus.Done;
+			}
+
+			private void CreateBorderPixels()
+			{
+				for (int x = 0; x < m_width; x++)
+				{
 					int pixel = 0;
 					int samples = 0;
 
-					for (int by = -m_borderSize ; by <= m_borderSize ; by++)
+					for (int by = -m_borderSize; by <= m_borderSize; by++)
 					{
-						for (int bx = -m_borderSize ; bx <= m_borderSize ; bx++)
+						for (int bx = -m_borderSize; bx <= m_borderSize; bx++)
 						{
 							int xx = x + bx;
-							int yy = y + by;
+							int yy = m_yTarget + by;
 							samples++;
-							
-							if( xx < 0 | width <= xx | yy < 0 | height <= yy )
+
+							if (xx < 0 | m_width <= xx | yy < 0 | m_height <= yy)
 							{
 								continue;
 							}
-							pixel += m_fontPixels[xx+yy*width];
+							pixel += m_fontPixels[xx + yy * m_width];
 						}
 					}
 					pixel /= samples;
-					m_borderPixels[x+y*width] = pixel;                                    
+					m_borderPixels[x + m_yTarget * m_width] = pixel;
 				}
 			}
 		}
+
+
 	}
 
 	public static class TextureRenderer implements Job

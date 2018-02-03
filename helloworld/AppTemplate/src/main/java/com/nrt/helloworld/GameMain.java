@@ -830,16 +830,18 @@ public class GameMain implements AppFrame
 		bf.SetSize(8.0f);
 		bf.SetColor(0xffffffff);
 		bf.Begin();
+		int mainQueueJobs = SubSystem.JobScheduler.m_workerContext.GetMainQueue().size();
+		int yieldQueueJobs = SubSystem.JobScheduler.m_workerContext.GetYieldQueue().size();
 		bf.Draw
 		(
 			0.0f, 96.0f, 0.0f,
 			String.format
 			(
-				"LOADING RESOURCES %d/%d THREADS %d/%d",
+				"LOADING RESOURCES %d/%d JOB WAITING(%d) QUEUED(%d)",
 				SubSystem.DelayResourceQueue.m_queueResources.size(),
 				SubSystem.DelayResourceQueue.m_nbMaxResources,
-				SubSystem.DelayResourceLoader.GetLeftJobCount(),
-				SubSystem.DelayResourceLoader.GetAllJobCount()
+				yieldQueueJobs,
+				mainQueueJobs
 			)
 		);
 		bf.Draw(0.0f, 96.0f + 8.0f, 0.0f, String.format("TIME %5.1f", timer.FrameTime - m_fStartTime));
